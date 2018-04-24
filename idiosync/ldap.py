@@ -190,12 +190,14 @@ class LdapConfig(Config):
     """LDAP user database configuration"""
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, uri=None, domain='', base=None, **kwargs):
+    def __init__(self, uri=None, domain='', base=None, sasl_mech='GSSAPI',
+                 **kwargs):
         super(LdapConfig, self).__init__(**kwargs)
         self.uri = uri
         self.domain = domain
         self.base = (base if base is not None else
                      ','.join('dc=%s' % x for x in self.domain.split('.')))
+        self.sasl_mech = sasl_mech
 
 
 class LdapDatabase(WatchableDatabase):
@@ -208,7 +210,7 @@ class LdapDatabase(WatchableDatabase):
     def __init__(self, **kwargs):
         super(LdapDatabase, self).__init__(**kwargs)
         self.ldap = ldap.initialize(self.config.uri)
-        self.ldap.sasl_gssapi_bind_s()
+        self.ldap.sasl_non_interactive_bind_s(self.config.sasl_mech)
 
     def search(self, search):
         """Search LDAP database"""
