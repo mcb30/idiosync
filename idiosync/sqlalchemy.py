@@ -25,8 +25,8 @@ class SqlAttribute(Attribute):
 class SqlEntry(Entry):
     """A SQL user database entry"""
 
-    def __init__(self, db, key):
-        super(SqlEntry, self).__init__(db, key)
+    def __init__(self, key):
+        super(SqlEntry, self).__init__(key)
         if isinstance(type(self.key), DeclarativeMeta):
 
             # Key is a prefetched SQLAlchemy row

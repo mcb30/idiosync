@@ -1,6 +1,7 @@
 """User database"""
 
 from abc import ABC, abstractmethod
+import weakref
 
 ##############################################################################
 #
@@ -51,12 +52,18 @@ class Entry(ABC):
 
     NoSuchEntryError = NoSuchEntryError
 
-    def __init__(self, db, key):
-        self.db = db
+    def __init__(self, key):
         self.key = key
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.key)
+
+    db = None
+    """Containing user database
+
+    This is populated as a class attribute when the containing
+    user database class is instantiated.
+    """
 
     @staticmethod
     def match(other):
@@ -106,6 +113,10 @@ class Database(ABC):
 
     def __init__(self, **kwargs):
         self.config = self.Config(**kwargs)
+        # Construct User and Group classes attached to this database
+        db = weakref.proxy(self)
+        self.User = type(self.User.__name__, (self.User,), {'db': db})
+        self.Group = type(self.Group.__name__, (self.Group,), {'db': db})
 
     @property
     @abstractmethod
@@ -128,13 +139,13 @@ class Database(ABC):
         """Fetch user"""
         if isinstance(key, User):
             key = self.User.match(key)
-        return self.User(self, key)
+        return self.User(key)
 
     def group(self, key):
         """Fetch group"""
         if isinstance(key, Group):
             key = self.Group.match(key)
-        return self.Group(self, key)
+        return self.Group(key)
 
     @property
     @abstractmethod

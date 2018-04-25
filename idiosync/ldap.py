@@ -112,8 +112,8 @@ class LdapEntry(Entry):
     member = LdapStringAttribute('member', multi=True)
     memberOf = LdapStringAttribute('memberOf', multi=True)
 
-    def __init__(self, db, key):
-        super(LdapEntry, self).__init__(db, key)
+    def __init__(self, key):
+        super(LdapEntry, self).__init__(key)
         if isinstance(self.key, tuple):
 
             # Key is a prefetched LDAP entry
