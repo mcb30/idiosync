@@ -1,6 +1,6 @@
 """MediaWiki user database"""
 
-from sqlalchemy import TypeDecorator, Column, ForeignKey, Integer, Unicode
+from sqlalchemy import TypeDecorator, Column, ForeignKey, Integer, BINARY
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from .base import Group
@@ -23,7 +23,7 @@ class BinaryString(TypeDecorator):
     entirely at the application level.
     """
 
-    impl = Unicode
+    impl = BINARY
     python_type = str
 
     def process_bind_param(self, value, dialect):
