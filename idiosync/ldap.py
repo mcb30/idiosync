@@ -205,6 +205,9 @@ class LdapDatabase(WatchableDatabase):
         self.ldap = ldap.initialize(self.config.uri)
         self.ldap.sasl_non_interactive_bind_s(self.config.sasl_mech)
 
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.config.base)
+
     def search(self, search):
         """Search LDAP database"""
         logger.debug("Searching for %s", search)
