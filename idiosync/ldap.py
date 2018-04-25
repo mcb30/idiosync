@@ -5,7 +5,7 @@ import logging
 import uuid
 import ldap
 import ldap.controls.psearch
-from .base import Entry, User, Group, Config, WatchableDatabase
+from .base import Attribute, Entry, User, Group, Config, WatchableDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +26,9 @@ class LdapUnrecognisedEntryError(Exception):
 # LDAP attributes
 
 
-class LdapAttribute(object):
+class LdapAttribute(Attribute):
     """An LDAP attribute"""
     # pylint: disable=too-few-public-methods
-
-    def __init__(self, name, multi=False):
-        self.name = name
-        self.multi = multi
-
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.name)
 
     def __get__(self, instance, owner):
         """Get attribute value"""

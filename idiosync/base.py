@@ -33,6 +33,18 @@ class NoSuchGroupError(NoSuchEntryError):
 # User database entries
 
 
+class Attribute(ABC):
+    """A user database entry attribute"""
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, name, multi=False):
+        self.name = name
+        self.multi = multi
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.name)
+
+
 class Entry(ABC):
     """A user database entry"""
     # pylint: disable=too-few-public-methods
