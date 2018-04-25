@@ -144,3 +144,12 @@ class WatchableDatabase(Database):
     def watch(self):
         """Watch for database changes"""
         pass
+
+
+class WritableDatabase(Database):
+    """A writable user database"""
+
+    @abstractmethod
+    def commit(self):
+        """Commit database changes"""
+        pass
