@@ -76,9 +76,39 @@ class MediaWikiUser(SqlUser):
     model = OrmUser
     column = 'user_name'
 
-    name = SqlAttribute('user_name')
     displayName = SqlAttribute('user_real_name')
     mail = SqlAttribute('user_email')
+
+    @classmethod
+    def format_name(cls, name):
+        """Format user name to external representation"""
+        if not cls.db.config.title_case:
+            return name
+        return name[0].lower() + name[1:]
+
+    @classmethod
+    def parse_name(cls, name):
+        """Parse user name to database representation"""
+        if not cls.db.config.title_case:
+            return name
+        if not name[0].islower():
+            raise ValueError("User name must begin with a lower-case character")
+        return name[0].upper() + name[1:]
+
+    @property
+    def name(self):
+        """User name"""
+        return self.format_name(self.row.user_name)
+
+    @name.setter
+    def name(self, value):
+        """User name"""
+        self.row.user_name = self.parse_name(value)
+
+    @classmethod
+    def match(cls, other):
+        """Identify matching user database entry"""
+        return cls.parse_name(other.name)
 
     @property
     def groups(self):
@@ -106,7 +136,10 @@ class MediaWikiGroup(Group):
 class MediaWikiConfig(SqlConfig):
     """MediaWiki user database configuration"""
     # pylint: disable=too-few-public-methods
-    pass
+
+    def __init__(self, title_case=True, **kwargs):
+        super(MediaWikiConfig, self).__init__(**kwargs)
+        self.title_case = title_case
 
 
 class MediaWikiDatabase(SqlDatabase):
