@@ -152,6 +152,8 @@ class LdapUser(LdapEntry, User):
     telephoneNumber = LdapStringAttribute('telephoneNumber')
     title = LdapStringAttribute('title')
 
+    name = commonName
+
     @property
     def groups(self):
         """Groups of which this user is a member"""
@@ -166,6 +168,8 @@ class LdapGroup(LdapEntry, Group):
 
     commonName = LdapStringAttribute('cn')
     description = LdapStringAttribute('description')
+
+    name = commonName
 
     @property
     def users(self):

@@ -16,6 +16,8 @@ class Rfc2307User(LdapUser):
     uidNumber = LdapNumericAttribute('uidNumber')
     uid = LdapStringAttribute('uid')
 
+    name = uid
+
 
 class Rfc2307Group(LdapGroup):
     """An RFC2307 group"""

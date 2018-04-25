@@ -65,10 +65,15 @@ class Entry(ABC):
     user database class is instantiated.
     """
 
+    @property
+    def name(self):
+        """Canonical name"""
+        return self.key
+
     @staticmethod
     def match(other):
         """Identify matching user database entry"""
-        return other.key
+        return other.name
 
 
 class User(Entry):
