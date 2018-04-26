@@ -188,13 +188,15 @@ class LdapConfig(Config):
     # pylint: disable=too-few-public-methods
 
     def __init__(self, uri=None, domain='', base=None, sasl_mech='GSSAPI',
-                 **kwargs):
+                 username=None, password=None, **kwargs):
         super(LdapConfig, self).__init__(**kwargs)
         self.uri = uri
         self.domain = domain
         self.base = (base if base is not None else
                      ','.join('dc=%s' % x for x in self.domain.split('.')))
         self.sasl_mech = sasl_mech
+        self.username = username
+        self.password = password
 
 
 class LdapDatabase(WatchableDatabase):
@@ -207,10 +209,26 @@ class LdapDatabase(WatchableDatabase):
     def __init__(self, **kwargs):
         super(LdapDatabase, self).__init__(**kwargs)
         self.ldap = ldap.initialize(self.config.uri)
-        self.ldap.sasl_non_interactive_bind_s(self.config.sasl_mech)
+        self.bind()
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.config.base)
+
+    def bind(self):
+        """Bind to LDAP database"""
+        if self.config.sasl_mech:
+            # Perform SASL bind
+            cb = {
+                ldap.sasl.CB_AUTHNAME: self.config.username,
+                ldap.sasl.CB_PASS: self.config.password
+            }
+            sasl = ldap.sasl.sasl(cb, self.config.sasl_mech)
+            self.ldap.sasl_interactive_bind_s('', sasl)
+        else:
+            # Perform simple (or anonymous) bind
+            self.ldap.simple_bind_s(self.config.username or '',
+                                    self.config.password or '')
+        logger.debug("Authenticated as %s", self.ldap.whoami_s())
 
     def search(self, search):
         """Search LDAP database"""
