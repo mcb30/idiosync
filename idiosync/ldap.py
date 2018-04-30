@@ -111,6 +111,7 @@ class LdapEntry(Entry):
 
     member = LdapStringAttribute('member', multi=True)
     memberOf = LdapStringAttribute('memberOf', multi=True)
+    uuid = LdapUuidAttribute('entryUUID')
 
     def __init__(self, key):
         super(LdapEntry, self).__init__(key)
@@ -233,7 +234,8 @@ class LdapDatabase(WatchableDatabase):
     def search(self, search):
         """Search LDAP database"""
         logger.debug("Searching for %s", search)
-        return self.ldap.search_s(self.config.base, ldap.SCOPE_SUBTREE, search)
+        return self.ldap.search_s(self.config.base, ldap.SCOPE_SUBTREE,
+                                  search, ['*', '+'])
 
     @property
     def users(self):
@@ -250,7 +252,8 @@ class LdapDatabase(WatchableDatabase):
         search = '(|%s%s)' % (self.User.search.all, self.Group.search.all)
         serverctrls = [ldap.controls.psearch.PersistentSearchControl()]
         msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
-                                     search, serverctrls=serverctrls)
+                                     search, ['*', '+'],
+                                     serverctrls=serverctrls)
         user_objectClass = self.User.search.objectClass.lower()
         group_objectClass = self.Group.search.objectClass.lower()
         while True:

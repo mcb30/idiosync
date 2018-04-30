@@ -10,7 +10,7 @@ class IpaUser(Rfc2307User):
     search = LdapSearch('inetOrgPerson', 'uid',
                         lambda x: '(memberOf=%s)' % x.dn)
 
-    uuid = LdapUuidAttribute('ipaUniqueID')
+    uuid = LdapUuidAttribute('nsUniqueId')
 
 
 class IpaGroup(Rfc2307Group):
@@ -18,7 +18,7 @@ class IpaGroup(Rfc2307Group):
 
     search = LdapSearch('ipaUserGroup', 'cn', lambda x: '(member=%s)' % x.dn)
 
-    uuid = LdapUuidAttribute('ipaUniqueID')
+    uuid = LdapUuidAttribute('nsUniqueId')
 
 
 class IpaConfig(Rfc2307Config):
