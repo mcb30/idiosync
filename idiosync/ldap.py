@@ -6,9 +6,10 @@ import logging
 import uuid
 import ldap
 from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
-                           SyncDoneControl, SyncInfoMessage)
+                           SyncDoneControl)
 from .base import (Attribute, Entry, User, Group, Config, WatchableDatabase,
                    SyncId, UnchangedSyncIds, DeletedSyncIds, RefreshComplete)
+from .syncrepl import SyncInfoMessage
 
 logger = logging.getLogger(__name__)
 
