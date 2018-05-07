@@ -1,24 +1,48 @@
 """LDAP user database"""
 
 from abc import abstractmethod
+from collections import namedtuple
 import logging
 import uuid
 import ldap
-import ldap.controls.psearch
-from .base import Attribute, Entry, User, Group, Config, WatchableDatabase
+from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
+                           SyncDoneControl, SyncInfoMessage)
+from .base import (Attribute, Entry, User, Group, Config, WatchableDatabase,
+                   SyncId, UnchangedSyncIds, DeletedSyncIds, RefreshComplete)
 
 logger = logging.getLogger(__name__)
+
+##############################################################################
+#
+# Base types
+
+LdapResult = namedtuple('LdapResult',
+                        ['type', 'data', 'msgid', 'ctrls', 'name', 'value'])
 
 ##############################################################################
 #
 # Exceptions
 
 
+class LdapProtocolError(Exception):
+    """LDAP protocol error"""
+
+    def __str__(self):
+        return "Protocol error: %s" % self.args
+
+
 class LdapUnrecognisedEntryError(Exception):
     """Unrecognised LDAP database entry"""
 
     def __str__(self):
-        return 'Unrecognised entry %s' % self.args
+        return "Unrecognised entry %s" % self.args
+
+
+class LdapSyncIdMismatchError(Exception):
+    """SyncId does not match UUID attribute"""
+
+    def __str__(self):
+        return "SyncId %s mismatch for entry %s (%s)" % self.args
 
 
 ##############################################################################
@@ -208,6 +232,8 @@ class LdapDatabase(WatchableDatabase):
     User = LdapUser
     Group = LdapGroup
 
+    cookie = None
+
     def __init__(self, **kwargs):
         super(LdapDatabase, self).__init__(**kwargs)
         self.ldap = ldap.initialize(self.config.uri, **self.config.options)
@@ -248,29 +274,124 @@ class LdapDatabase(WatchableDatabase):
         """All groups"""
         return (self.group(x) for x in self.search(self.Group.search.all))
 
-    def watch(self):
-        """Watch for database changes"""
-        search = '(|%s%s)' % (self.User.search.all, self.Group.search.all)
-        serverctrls = [ldap.controls.psearch.PersistentSearchControl()]
-        msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
-                                     search, ['*', '+'],
-                                     serverctrls=serverctrls)
+    def _watch_res_search_entry(self, dn, attrs, sync):
+        """Process watch search entry"""
         user_objectClass = self.User.search.objectClass.lower()
         group_objectClass = self.Group.search.objectClass.lower()
+        syncid = SyncId(sync.entryUUID)
+        if sync.state == 'present':
+
+            # Unchanged entry (identified only by UUID)
+            yield UnchangedSyncIds([syncid])
+
+        elif sync.state == 'delete':
+
+            # Deleted entry (identified only by UUID)
+            yield DeletedSyncIds([syncid])
+
+        else:
+
+            # Modified or newly created entry (with UUID and DN)
+            constructor = None
+            for objectClass in attrs['objectClass']:
+                objectClass = objectClass.decode().lower()
+                if objectClass == user_objectClass:
+                    constructor = self.user
+                    break
+                elif objectClass == group_objectClass:
+                    constructor = self.group
+                    break
+            if constructor is None:
+                raise LdapUnrecognisedEntryError(dn)
+            entry = constructor((dn, attrs))
+            if syncid != entry.uuid:
+                raise LdapSyncIdMismatchError(syncid, entry.uuid, dn)
+            yield entry
+
+        # Update cookie if applicable
+        if sync.cookie is not None:
+            self.cookie = sync.cookie
+
+    def _watch_res_intermediate(self, sync):
+        """Process watch intermediate result"""
+        cookie = None
+        if sync.newcookie is not None:
+
+            # Updated cookie message
+            cookie = sync.newcookie
+
+        elif sync.refreshDelete is not None:
+
+            # Delete phase complete
+            cookie = sync.refreshDelete.get('cookie')
+            if sync.refreshDelete['refreshDone']:
+                yield RefreshComplete(delete=True)
+
+        elif sync.refreshPresent is not None:
+
+            # Present phase complete
+            cookie = sync.refreshPresent.get('cookie')
+            if sync.refreshPresent['refreshDone']:
+                yield RefreshComplete(delete=False)
+
+        elif sync.syncIdSet is not None:
+
+            # Synchronization identifier list
+            cookie = sync.syncIdSet.get('cookie')
+            cls = (DeletedSyncIds if sync.syncIdSet['refreshDeletes']
+                   else UnchangedSyncIds)
+            yield cls(SyncId(x) for x in sync.syncIdSet['syncUUIDs'])
+
+        else:
+
+            # Unrecognised syncInfoValue
+            raise LdapProtocolError("Unrecognised syncInfoValue")
+
+        # Update cookie if applicable
+        if cookie is not None:
+            self.cookie = cookie
+
+    def _watch_res_search_result(self, sync):
+        """Process watch search result"""
+        yield RefreshComplete(delete=sync.refreshDeletes)
+
+        # Update cookie if applicable
+        if sync.cookie is not None:
+            self.cookie = sync.cookie
+
+    def watch(self, oneshot=False):
+        """Watch for database changes"""
+
+        # Issue request
+        mode = ('refreshOnly' if oneshot else 'refreshAndPersist')
+        syncreq = SyncRequestControl(cookie=self.cookie, mode=mode)
+        search = '(|%s%s)' % (self.User.search.all, self.Group.search.all)
+        msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
+                                     search, ['*', '+'], serverctrls=[syncreq])
+
+        # Parse responses
         while True:
-            (res_type, res_list, *_) = self.ldap.result4(msgid, all=0)
-            if not (res_type and res_list):
-                return
-            for dn, attrs in res_list:
-                constructor = None
-                for objectClass in attrs['objectClass']:
-                    objectClass = objectClass.decode().lower()
-                    if objectClass == user_objectClass:
-                        constructor = self.user
-                        break
-                    elif objectClass == group_objectClass:
-                        constructor = self.group
-                        break
-                if constructor is None:
-                    raise LdapUnrecognisedEntryError(dn)
-                yield constructor((dn, attrs))
+            res = LdapResult(*self.ldap.result4(msgid, all=0, add_ctrls=1))
+            if res.type == ldap.RES_SEARCH_ENTRY:
+                for dn, attrs, ctrls in res.data:
+                    sync = next((ctrl for ctrl in ctrls if
+                                 isinstance(ctrl, SyncStateControl)), None)
+                    if sync is None:
+                        raise LdapProtocolError("Missing syncStateControl")
+                    yield from self._watch_res_search_entry(dn, attrs, sync)
+            elif res.type == ldap.RES_INTERMEDIATE:
+                sync = next((SyncInfoMessage(msg)
+                             for rname, msg, ctrls in res.data
+                             if rname == SyncInfoMessage.responseName), None)
+                if sync is None:
+                    raise LdapProtocolError("Missing syncInfoMessage")
+                yield from self._watch_res_intermediate(sync)
+            elif res.type == ldap.RES_SEARCH_RESULT:
+                sync = next((ctrl for ctrl in res.ctrls if
+                             isinstance(ctrl, SyncDoneControl)), None)
+                if sync is None:
+                    raise LdapProtocolError("Missing syncDoneControl")
+                yield from self._watch_res_search_result(sync)
+                break
+            else:
+                raise LdapProtocolError("Unrecognised message type")

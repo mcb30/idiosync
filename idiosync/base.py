@@ -179,7 +179,7 @@ class WatchableDatabase(Database):
     """A watchable user database"""
 
     @abstractmethod
-    def watch(self):
+    def watch(self, oneshot=False):
         """Watch for database changes"""
         pass
 
