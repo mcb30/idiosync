@@ -295,11 +295,13 @@ class LdapDatabase(WatchableDatabase):
         if sync.state == 'present':
 
             # Unchanged entry (identified only by UUID)
+            logger.debug("Present entry %s", syncid)
             yield UnchangedSyncIds([syncid])
 
         elif sync.state == 'delete':
 
             # Deleted entry (identified only by UUID)
+            logger.debug("Delete entry %s", syncid)
             yield DeletedSyncIds([syncid])
 
         else:
@@ -333,28 +335,36 @@ class LdapDatabase(WatchableDatabase):
 
             # Updated cookie message
             cookie = sync.newcookie
+            logger.debug("New cookie: %s", cookie)
 
         elif sync.refreshDelete is not None:
 
             # Delete phase complete
             cookie = sync.refreshDelete.get('cookie')
-            if sync.refreshDelete['refreshDone']:
+            done = sync.refreshDelete['refreshDone']
+            logger.debug("Delete complete: done=%s cookie=%s", done, cookie)
+            if done:
                 yield RefreshComplete(delete=True)
 
         elif sync.refreshPresent is not None:
 
             # Present phase complete
             cookie = sync.refreshPresent.get('cookie')
-            if sync.refreshPresent['refreshDone']:
+            done = sync.refreshPresent['refreshDone']
+            logger.debug("Present complete: done=%s cookie=%s", done, cookie)
+            if done:
                 yield RefreshComplete(delete=False)
 
         elif sync.syncIdSet is not None:
 
             # Synchronization identifier list
             cookie = sync.syncIdSet.get('cookie')
-            cls = (DeletedSyncIds if sync.syncIdSet['refreshDeletes']
-                   else UnchangedSyncIds)
-            yield cls(SyncId(x) for x in sync.syncIdSet['syncUUIDs'])
+            delete = sync.syncIdSet['refreshDeletes']
+            uuids = sync.syncIdSet['syncUUIDs']
+            cls = (DeletedSyncIds if delete else UnchangedSyncIds)
+            logger.debug("%s %d sync IDs",
+                         ("Delete" if delete else "Present"), len(uuids))
+            yield cls(SyncId(x) for x in uuids)
 
         else:
 
@@ -367,11 +377,17 @@ class LdapDatabase(WatchableDatabase):
 
     def _watch_res_search_result(self, sync):
         """Process watch search result"""
-        yield RefreshComplete(delete=sync.refreshDeletes)
+
+        # Parse result
+        cookie = sync.cookie
+        delete = sync.refreshDeletes
+        logger.debug("%s complete: cookie=%s",
+                     ("Delete" if delete else "Present"), cookie)
+        yield RefreshComplete(delete=delete)
 
         # Update cookie if applicable
-        if sync.cookie is not None:
-            self.cookie = sync.cookie
+        if cookie is not None:
+            self.cookie = cookie
 
     def watch(self, oneshot=False):
         """Watch for database changes"""
@@ -380,6 +396,7 @@ class LdapDatabase(WatchableDatabase):
         mode = ('refreshOnly' if oneshot else 'refreshAndPersist')
         syncreq = SyncRequestControl(cookie=self.cookie, mode=mode)
         search = '(|%s%s)' % (self.User.search.all, self.Group.search.all)
+        logger.debug("Searching in %s mode for %s", mode, search)
         msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
                                      search, ['*', '+'], serverctrls=[syncreq])
 
