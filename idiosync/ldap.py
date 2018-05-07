@@ -190,6 +190,7 @@ class LdapConfig(Config):
 
     def __init__(self, uri=None, domain='', base=None, sasl_mech='GSSAPI',
                  username=None, password=None, **kwargs):
+        # pylint: disable=too-many-arguments
         super(LdapConfig, self).__init__(**kwargs)
         self.uri = uri
         self.domain = domain
