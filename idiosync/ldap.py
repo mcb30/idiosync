@@ -362,8 +362,9 @@ class LdapDatabase(WatchableDatabase):
             delete = sync.syncIdSet['refreshDeletes']
             uuids = sync.syncIdSet['syncUUIDs']
             cls = (DeletedSyncIds if delete else UnchangedSyncIds)
-            logger.debug("%s %d sync IDs",
-                         ("Delete" if delete else "Present"), len(uuids))
+            logger.debug("%s %d sync IDs: %s",
+                         ("Delete" if delete else "Present"), len(uuids),
+                         ", ".join(str(x) for x in uuids))
             yield cls(SyncId(x) for x in uuids)
 
         else:
