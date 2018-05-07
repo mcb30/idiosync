@@ -19,6 +19,16 @@ logger = logging.getLogger(__name__)
 LdapResult = namedtuple('LdapResult',
                         ['type', 'data', 'msgid', 'ctrls', 'name', 'value'])
 
+
+class LdapAttributeDict(dict):
+    """An LDAP attribute dictionary"""
+
+    def __init__(self, raw):
+        # Force all keys to lower case
+        super(LdapAttributeDict, self).__init__({k.lower(): v
+                                                 for k, v in raw.items()})
+
+
 ##############################################################################
 #
 # Exceptions
@@ -62,7 +72,8 @@ class LdapAttribute(Attribute):
             return self
 
         # Parse and return as list or single value as applicable
-        attr = [self.parse(x) for x in instance.attrs.get(self.name, ())]
+        attr = [self.parse(x)
+                for x in instance.attrs.get(self.name.lower(), ())]
         return attr if self.multi else attr[0] if attr else None
 
     @staticmethod
@@ -143,16 +154,17 @@ class LdapEntry(Entry):
 
             # Key is a prefetched LDAP entry
             (self.dn, self.attrs) = self.key
-            self.key = self.attrs[self.search.key][0].decode()
+            self.key = self.attrs[self.search.key.lower()][0].decode()
 
         else:
 
             # Key is a search attribute
             res = self.db.search(self.search.single(self.key))
             try:
-                [(self.dn, self.attrs)] = res
+                [(self.dn, attrs)] = res
             except ValueError:
                 raise self.NoSuchEntryError(self.key) from None
+            self.attrs = LdapAttributeDict(attrs)
 
     @property
     @abstractmethod
@@ -293,7 +305,8 @@ class LdapDatabase(WatchableDatabase):
 
             # Modified or newly created entry (with UUID and DN)
             constructor = None
-            for objectClass in attrs['objectClass']:
+            attrs = LdapAttributeDict(attrs)
+            for objectClass in attrs['objectclass']:
                 objectClass = objectClass.decode().lower()
                 if objectClass == user_objectClass:
                     constructor = self.user
