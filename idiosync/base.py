@@ -1,6 +1,8 @@
 """User database"""
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
+import uuid
 import weakref
 
 ##############################################################################
@@ -189,3 +191,88 @@ class WritableDatabase(Database):
     def commit(self):
         """Commit database changes"""
         pass
+
+
+##############################################################################
+#
+# Synchronization identifiers
+
+
+class SyncId(uuid.UUID):
+    """A synchronization identifier
+
+    A synchronization identifier is a UUID used to permanently
+    identify a user database entry.
+
+    For a source user database, the requirement is that the
+    synchronization identifier is an immutable property of the user
+    database entry.  It is not necessary for the source database to
+    support looking up an entry via its synchronization identifier.
+
+    For example:
+
+        An LDAP database may choose to use the entryUUID operational
+        attribute as the synchronization identifier.
+
+        A SQL database may choose to derive a synchronization
+        identifier as a version 5 UUID by computing the SHA-1 hash of
+        a table name and an integer primary key.  Such an identifier
+        is an immutable property of the database entry (assuming that
+        the integer primary key value is immutable), even though it
+        cannot be used directly to look up an entry within the SQL
+        database.
+
+    For a destination user database, the externally supplied
+    synchronization identifier is stored as an additional property of
+    each synchronized user database entry.  The destination database
+    must support looking up an entry via the externally supplied
+    synchronization identifier.
+
+    Note that a synchronization identifier does not encode any
+    information about whether the user database entry represents a
+    user or a group.  Destination user databases must therefore
+    support looking up an entry via the externally supplied
+    synchronization identifier without knowing the type of the entry
+    in advance.
+
+    Bulk deletions may be carried out efficiently using only a list of
+    synchronization identifiers.
+    """
+    pass
+
+
+class SyncIds(Iterable):
+    """A list of synchronization identifiers"""
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, iterable):
+        self.iterable = iterable
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.iterable)
+
+    def __iter__(self):
+        return iter(self.iterable)
+
+
+class UnchangedSyncIds(SyncIds):
+    """A list of synchronization identifiers for unchanged database entries"""
+    # pylint: disable=too-few-public-methods
+    pass
+
+
+class DeletedSyncIds(SyncIds):
+    """A list of synchronization identifiers for deleted database entries"""
+    # pylint: disable=too-few-public-methods
+    pass
+
+
+class RefreshComplete(object):
+    """An indication that the refresh stage of synchronization is complete"""
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, delete=False):
+        self.delete = delete
+
+    def __repr__(self):
+        return "%s(delete=%r)" % (self.__class__.__name__, self.delete)
