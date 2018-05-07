@@ -384,7 +384,8 @@ class LdapDatabase(WatchableDatabase):
 
         # Parse responses
         while True:
-            res = LdapResult(*self.ldap.result4(msgid, all=0, add_ctrls=1))
+            res = LdapResult(*self.ldap.result4(msgid, all=0, add_ctrls=1,
+                                                add_intermediates=1))
             if res.type == ldap.RES_SEARCH_ENTRY:
                 for dn, attrs, ctrls in res.data:
                     sync = next((ctrl for ctrl in ctrls if
