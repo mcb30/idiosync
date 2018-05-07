@@ -271,8 +271,8 @@ class RefreshComplete(object):
     """An indication that the refresh stage of synchronization is complete"""
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, delete=False):
-        self.delete = delete
+    def __init__(self, autodelete=False):
+        self.autodelete = autodelete
 
     def __repr__(self):
-        return "%s(delete=%r)" % (self.__class__.__name__, self.delete)
+        return "%s(autodelete=%r)" % (self.__class__.__name__, self.autodelete)

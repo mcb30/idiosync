@@ -344,7 +344,7 @@ class LdapDatabase(WatchableDatabase):
             done = sync.refreshDelete['refreshDone']
             logger.debug("Delete complete: done=%s cookie=%s", done, cookie)
             if done:
-                yield RefreshComplete(delete=True)
+                yield RefreshComplete(autodelete=False)
 
         elif sync.refreshPresent is not None:
 
@@ -353,7 +353,7 @@ class LdapDatabase(WatchableDatabase):
             done = sync.refreshPresent['refreshDone']
             logger.debug("Present complete: done=%s cookie=%s", done, cookie)
             if done:
-                yield RefreshComplete(delete=False)
+                yield RefreshComplete(autodelete=True)
 
         elif sync.syncIdSet is not None:
 
@@ -384,7 +384,7 @@ class LdapDatabase(WatchableDatabase):
         delete = sync.refreshDeletes
         logger.debug("%s complete: cookie=%s",
                      ("Delete" if delete else "Present"), cookie)
-        yield RefreshComplete(delete=delete)
+        yield RefreshComplete(autodelete=not delete)
 
         # Update cookie if applicable
         if cookie is not None:
@@ -394,7 +394,7 @@ class LdapDatabase(WatchableDatabase):
         """Watch for database changes"""
 
         # Issue request
-        mode = ('refreshOnly' if oneshot else 'refreshAndPersist')
+        mode = 'refreshOnly' if oneshot else 'refreshAndPersist'
         syncreq = SyncRequestControl(cookie=self.cookie, mode=mode)
         search = '(|%s%s)' % (self.User.search.all, self.Group.search.all)
         logger.debug("Searching in %s mode for %s", mode, search)
