@@ -209,7 +209,7 @@ class LdapDatabase(WatchableDatabase):
 
     def __init__(self, **kwargs):
         super(LdapDatabase, self).__init__(**kwargs)
-        self.ldap = ldap.initialize(self.config.uri)
+        self.ldap = ldap.initialize(self.config.uri, **self.config.options)
         self.bind()
 
     def __repr__(self):

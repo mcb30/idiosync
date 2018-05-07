@@ -110,7 +110,9 @@ class Group(Entry):
 class Config(ABC):
     """A user database configuration"""
     # pylint: disable=too-few-public-methods
-    pass
+
+    def __init__(self, **kwargs):
+        self.options = kwargs
 
 
 class Database(ABC):

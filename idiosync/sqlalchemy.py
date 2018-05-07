@@ -71,9 +71,8 @@ class SqlConfig(Config):
     # pylint: disable=too-few-public-methods
 
     def __init__(self, uri, **kwargs):
-        super(SqlConfig, self).__init__()
+        super(SqlConfig, self).__init__(**kwargs)
         self.uri = uri
-        self.options = kwargs
 
 
 class SqlDatabase(WritableDatabase):
