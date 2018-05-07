@@ -1,10 +1,13 @@
 """MediaWiki user database"""
 
+import uuid
 from sqlalchemy import TypeDecorator, Column, ForeignKey, Integer, BINARY
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from .base import Group
 from .sqlalchemy import SqlAttribute, SqlUser, SqlConfig, SqlDatabase
+
+NAMESPACE_MEDIAWIKI = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
 
 ##############################################################################
 #
@@ -131,6 +134,13 @@ class MediaWikiGroup(Group):
             OrmUserGroup.ug_group == self.key
         )
         return (self.db.user(x) for x in query)
+
+    @property
+    def uuid(self):
+        """Permanent identifier for this entry"""
+        # Generate UUID from group name since there is no concept of
+        # permanent identity for MediaWiki groups
+        return uuid.uuid5(NAMESPACE_MEDIAWIKI, self.key)
 
 
 class MediaWikiConfig(SqlConfig):

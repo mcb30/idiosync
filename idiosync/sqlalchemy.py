@@ -1,10 +1,13 @@
 """SQLAlchemy user database"""
 
-from abc import abstractmethod
-from sqlalchemy import create_engine
+from abc import abstractmethod, ABCMeta
+import uuid
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from .base import Attribute, Entry, User, Group, Config, WritableDatabase
+
+NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
 
 
 class SqlAttribute(Attribute):
@@ -22,8 +25,21 @@ class SqlAttribute(Attribute):
         setattr(instance.row, self.name, value)
 
 
-class SqlEntry(Entry):
+class SqlEntryMeta(ABCMeta):
+    """SQL user database entry metaclass"""
+
+    def __init__(cls, name, bases, dct):
+        super(SqlEntryMeta, cls).__init__(name, bases, dct)
+        # Construct a namespace based on the table name if applicable
+        if isinstance(cls.model, DeclarativeMeta):
+            cls.uuid_ns = uuid.uuid5(NAMESPACE_SQL, cls.model.__table__.name)
+
+
+class SqlEntry(Entry, metaclass=SqlEntryMeta):
     """A SQL user database entry"""
+
+    uuid_ns = None
+    """UUID namespace for entries within this table"""
 
     def __init__(self, key):
         super(SqlEntry, self).__init__(key)
@@ -52,6 +68,12 @@ class SqlEntry(Entry):
     def column(self):
         """Key column"""
         pass
+
+    @property
+    def uuid(self):
+        """Permanent identifier for this entry"""
+        identity = inspect(self.row).identity
+        return uuid.uuid5(self.uuid_ns, ':'.join(str(x) for x in identity))
 
 
 class SqlUser(SqlEntry, User):

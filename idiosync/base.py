@@ -75,6 +75,12 @@ class Entry(ABC):
         """Identify matching user database entry"""
         return other.name
 
+    @property
+    @abstractmethod
+    def uuid(self):
+        """Permanent identifier for this entry"""
+        pass
+
 
 class User(Entry):
     """A user"""
