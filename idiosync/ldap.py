@@ -114,6 +114,15 @@ class LdapUuidAttribute(LdapAttribute):
         return uuid.UUID(value.decode())
 
 
+class LdapEntryUuidAttribute(LdapUuidAttribute):
+    """An EntryUUID LDAP attribute"""
+    # pylint: disable=too-few-public-methods
+
+    def __set__(self, instance, value):
+        # Allow EntryUUID to be populated from syncStateControl value
+        instance.attrs[self.name.lower()] = [str(value).encode()]
+
+
 ##############################################################################
 #
 # LDAP entries
@@ -147,7 +156,7 @@ class LdapEntry(Entry):
 
     member = LdapStringAttribute('member', multi=True)
     memberOf = LdapStringAttribute('memberOf', multi=True)
-    uuid = LdapUuidAttribute('entryUUID')
+    uuid = LdapEntryUuidAttribute('entryUUID')
 
     def __init__(self, key):
         super(LdapEntry, self).__init__(key)
@@ -320,7 +329,9 @@ class LdapDatabase(WatchableDatabase):
             if constructor is None:
                 raise LdapUnrecognisedEntryError(dn)
             entry = constructor((dn, attrs))
-            if syncid != entry.uuid:
+            if entry.uuid is None:
+                entry.uuid = syncid
+            elif entry.uuid != syncid:
                 raise LdapSyncIdMismatchError(syncid, entry.uuid, dn)
             yield entry
 

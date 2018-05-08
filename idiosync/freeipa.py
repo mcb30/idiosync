@@ -2,7 +2,7 @@
 
 import logging
 from .base import RefreshComplete
-from .ldap import LdapUuidAttribute, LdapSearch
+from .ldap import LdapEntryUuidAttribute, LdapSearch
 from .rfc2307 import Rfc2307User, Rfc2307Group, Rfc2307Config, Rfc2307Database
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class IpaUser(Rfc2307User):
     search = LdapSearch('inetOrgPerson', 'uid',
                         lambda x: '(memberOf=%s)' % x.dn)
 
-    uuid = LdapUuidAttribute('nsUniqueId')
+    uuid = LdapEntryUuidAttribute('nsUniqueId')
 
 
 class IpaGroup(Rfc2307Group):
@@ -22,7 +22,7 @@ class IpaGroup(Rfc2307Group):
 
     search = LdapSearch('ipaUserGroup', 'cn', lambda x: '(member=%s)' % x.dn)
 
-    uuid = LdapUuidAttribute('nsUniqueId')
+    uuid = LdapEntryUuidAttribute('nsUniqueId')
 
 
 class IpaConfig(Rfc2307Config):
