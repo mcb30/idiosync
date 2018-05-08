@@ -7,7 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator, BINARY
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from sqlalchemy.dialects import postgresql
-from .base import Attribute, Entry, User, Group, Config, WritableDatabase
+from .base import (Attribute, Entry, User, Group, Config, WritableDatabase,
+                   SyncId)
 
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
 
@@ -83,9 +84,10 @@ class SqlModel(object):
     """A SQLAlchemy model"""
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, orm, key):
+    def __init__(self, orm, key, syncid=None):
         self.orm = orm
         self.key = key
+        self.syncid = syncid
 
 
 class SqlAttribute(Attribute):
@@ -125,6 +127,15 @@ class SqlEntry(Entry, metaclass=SqlEntryMeta):
 
             # Key is a prefetched SQLAlchemy row
             self.row = self.key
+            self.key = getattr(self.row, self.model.key)
+
+        elif isinstance(self.key, SyncId):
+
+            # Key is a synchronization identifier
+            query = self.db.query(self.model.orm).filter(
+                getattr(self.model.orm, self.model.syncid) == self.key
+            )
+            self.row = query.one()
             self.key = getattr(self.row, self.model.key)
 
         else:
