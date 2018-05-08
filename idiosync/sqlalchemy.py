@@ -79,6 +79,15 @@ class Uuid(TypeDecorator):
 # User database entries
 
 
+class SqlModel(object):
+    """A SQLAlchemy model"""
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, orm, key):
+        self.orm = orm
+        self.key = key
+
+
 class SqlAttribute(Attribute):
     """A SQL user database attribute"""
     # pylint: disable=too-few-public-methods
@@ -116,26 +125,20 @@ class SqlEntry(Entry, metaclass=SqlEntryMeta):
 
             # Key is a prefetched SQLAlchemy row
             self.row = self.key
-            self.key = getattr(self.row, self.column)
+            self.key = getattr(self.row, self.model.key)
 
         else:
 
             # Key is a column value
-            query = self.db.query(self.model).filter(
-                getattr(self.model, self.column) == self.key
+            query = self.db.query(self.model.orm).filter(
+                getattr(self.model.orm, self.model.key) == self.key
             )
             self.row = query.one()
 
     @property
     @abstractmethod
     def model(self):
-        """ORM model class"""
-        pass
-
-    @property
-    @abstractmethod
-    def column(self):
-        """Key column"""
+        """SQLAlchemy model"""
         pass
 
     @property

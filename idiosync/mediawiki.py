@@ -5,8 +5,8 @@ from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from .base import Group
-from .sqlalchemy import (BinaryString, SqlAttribute, SqlUser, SqlConfig,
-                         SqlDatabase)
+from .sqlalchemy import (BinaryString, SqlModel, SqlAttribute, SqlUser,
+                         SqlConfig, SqlDatabase)
 
 NAMESPACE_MEDIAWIKI = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
 
@@ -52,8 +52,7 @@ class OrmUserGroup(Base):
 class MediaWikiUser(SqlUser):
     """A MediaWiki user"""
 
-    model = OrmUser
-    column = 'user_name'
+    model = SqlModel(OrmUser, 'user_name')
 
     displayName = SqlAttribute('user_real_name')
     mail = SqlAttribute('user_email')
