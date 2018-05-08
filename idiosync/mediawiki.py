@@ -5,7 +5,7 @@ from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from .base import Group
-from .sqlalchemy import (BinaryString, SqlModel, SqlAttribute, SqlUser,
+from .sqlalchemy import (BinaryString, Uuid, SqlModel, SqlAttribute, SqlUser,
                          SqlConfig, SqlDatabase)
 
 NAMESPACE_MEDIAWIKI = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
@@ -28,6 +28,7 @@ class OrmUser(Base):
     user_name = Column(BinaryString, nullable=False, unique=True)
     user_real_name = Column(BinaryString, nullable=False)
     user_email = Column(BinaryString, nullable=False)
+    user_idiosyncid = Column(Uuid, unique=True)
 
     user_groups = relationship('OrmUserGroup', back_populates='user')
 
@@ -52,10 +53,11 @@ class OrmUserGroup(Base):
 class MediaWikiUser(SqlUser):
     """A MediaWiki user"""
 
-    model = SqlModel(OrmUser, 'user_name')
+    model = SqlModel(OrmUser, 'user_name', 'user_idiosyncid')
 
     displayName = SqlAttribute('user_real_name')
     mail = SqlAttribute('user_email')
+    syncid = SqlAttribute('user_idiosyncid')
 
     @classmethod
     def format_name(cls, name):
