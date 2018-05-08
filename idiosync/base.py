@@ -238,7 +238,13 @@ class SyncId(uuid.UUID):
     Bulk deletions may be carried out efficiently using only a list of
     synchronization identifiers.
     """
-    pass
+
+    def __init__(self, *args, uuid=None, **kwargs):
+        # pylint: disable=redefined-outer-name
+        if uuid is not None:
+            super(SyncId, self).__init__(*args, bytes=uuid.bytes, **kwargs)
+        else:
+            super(SyncId, self).__init__(*args, **kwargs)
 
 
 class SyncIds(Iterable):
