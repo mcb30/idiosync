@@ -23,6 +23,7 @@ class BinaryString(TypeDecorator):
     use raw binary columns and handle character encoding and decoding
     entirely at the application level.
     """
+    # pylint: disable=abstract-method
 
     impl = BINARY
     python_type = str
@@ -34,10 +35,6 @@ class BinaryString(TypeDecorator):
     def process_result_value(self, value, dialect):
         """Decode raw column value to Unicode string"""
         return value.decode('utf-8')
-
-    def process_literal_param(self, value, dialect):
-        """Encode Unicode string to inline literal value"""
-        return value
 
 
 ##############################################################################
