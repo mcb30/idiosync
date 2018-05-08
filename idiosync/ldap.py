@@ -128,8 +128,8 @@ class LdapEntryUuidAttribute(LdapUuidAttribute):
 # LDAP entries
 
 
-class LdapSearch(object):
-    """An LDAP search filter"""
+class LdapModel(object):
+    """An LDAP model"""
 
     def __init__(self, objectClass, key, member):
         self.objectClass = objectClass
@@ -164,12 +164,12 @@ class LdapEntry(Entry):
 
             # Key is a prefetched LDAP entry
             (self.dn, self.attrs) = self.key
-            self.key = self.attrs[self.search.key.lower()][0].decode()
+            self.key = self.attrs[self.model.key.lower()][0].decode()
 
         else:
 
             # Key is a search attribute
-            res = self.db.search(self.search.single(self.key))
+            res = self.db.search(self.model.single(self.key))
             try:
                 [(self.dn, attrs)] = res
             except ValueError:
@@ -178,15 +178,15 @@ class LdapEntry(Entry):
 
     @property
     @abstractmethod
-    def search(self):
-        """Search filter"""
+    def model(self):
+        """LDAP model"""
         pass
 
 
 class LdapUser(LdapEntry, User):
     """An LDAP user"""
 
-    search = LdapSearch('person', 'cn', lambda x: '(memberOf=%s)' % x.dn)
+    model = LdapModel('person', 'cn', lambda x: '(memberOf=%s)' % x.dn)
 
     commonName = LdapStringAttribute('cn')
     displayName = LdapStringAttribute('displayName')
@@ -205,13 +205,13 @@ class LdapUser(LdapEntry, User):
     def groups(self):
         """Groups of which this user is a member"""
         return (self.db.group(x) for x in
-                self.db.search(self.db.Group.search.membership(self)))
+                self.db.search(self.db.Group.model.membership(self)))
 
 
 class LdapGroup(LdapEntry, Group):
     """An LDAP group"""
 
-    search = LdapSearch('groupOfNames', 'cn', lambda x: '(member=%s)' % x.dn)
+    model = LdapModel('groupOfNames', 'cn', lambda x: '(member=%s)' % x.dn)
 
     commonName = LdapStringAttribute('cn')
     description = LdapStringAttribute('description')
@@ -222,7 +222,7 @@ class LdapGroup(LdapEntry, Group):
     def users(self):
         """Users who are members of this group"""
         return (self.db.user(x) for x in
-                self.db.search(self.db.User.search.membership(self)))
+                self.db.search(self.db.User.model.membership(self)))
 
 
 ##############################################################################
@@ -289,17 +289,17 @@ class LdapDatabase(WatchableDatabase):
     @property
     def users(self):
         """All users"""
-        return (self.user(x) for x in self.search(self.User.search.all))
+        return (self.user(x) for x in self.search(self.User.model.all))
 
     @property
     def groups(self):
         """All groups"""
-        return (self.group(x) for x in self.search(self.Group.search.all))
+        return (self.group(x) for x in self.search(self.Group.model.all))
 
     def _watch_res_search_entry(self, dn, attrs, sync):
         """Process watch search entry"""
-        user_objectClass = self.User.search.objectClass.lower()
-        group_objectClass = self.Group.search.objectClass.lower()
+        user_objectClass = self.User.model.objectClass.lower()
+        group_objectClass = self.Group.model.objectClass.lower()
         syncid = SyncId(sync.entryUUID)
         if sync.state == 'present':
 
@@ -408,7 +408,7 @@ class LdapDatabase(WatchableDatabase):
         # Issue request
         mode = 'refreshOnly' if oneshot else 'refreshAndPersist'
         syncreq = SyncRequestControl(cookie=self.cookie, mode=mode)
-        search = '(|%s%s)' % (self.User.search.all, self.Group.search.all)
+        search = '(|%s%s)' % (self.User.model.all, self.Group.model.all)
         logger.debug("Searching in %s mode for %s", mode, search)
         msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
                                      search, ['*', '+'], serverctrls=[syncreq])
