@@ -372,11 +372,12 @@ class LdapDatabase(WatchableDatabase):
             cookie = sync.syncIdSet.get('cookie')
             delete = sync.syncIdSet['refreshDeletes']
             uuids = sync.syncIdSet['syncUUIDs']
-            cls = (DeletedSyncIds if delete else UnchangedSyncIds)
             logger.debug("%s %d sync IDs: %s",
                          ("Delete" if delete else "Present"), len(uuids),
                          ", ".join(str(x) for x in uuids))
-            yield cls(SyncId(x) for x in uuids)
+            cls = (DeletedSyncIds if delete else UnchangedSyncIds)
+            syncids = cls([SyncId(x) for x in uuids])
+            yield syncids
 
         else:
 
