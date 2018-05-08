@@ -4,10 +4,45 @@ from abc import abstractmethod, ABCMeta
 import uuid
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.types import TypeDecorator, BINARY
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from .base import Attribute, Entry, User, Group, Config, WritableDatabase
 
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
+
+##############################################################################
+#
+# Reusable column types
+
+
+class BinaryString(TypeDecorator):
+    """Unicode string held in a binary column
+
+    Apparently MySQL's support for Unicode has historically been so
+    badly broken that applications such as MediaWiki have chosen to
+    use raw binary columns and handle character encoding and decoding
+    entirely at the application level.
+    """
+
+    impl = BINARY
+    python_type = str
+
+    def process_bind_param(self, value, dialect):
+        """Encode Unicode string to raw column value"""
+        return value.encode('utf-8')
+
+    def process_result_value(self, value, dialect):
+        """Decode raw column value to Unicode string"""
+        return value.decode('utf-8')
+
+    def process_literal_param(self, value, dialect):
+        """Encode Unicode string to inline literal value"""
+        return value
+
+
+##############################################################################
+#
+# User database entries
 
 
 class SqlAttribute(Attribute):
@@ -86,6 +121,11 @@ class SqlGroup(SqlEntry, Group):
     """A SQL user database group"""
     # pylint: disable=abstract-method
     pass
+
+
+##############################################################################
+#
+# User database
 
 
 class SqlConfig(Config):
