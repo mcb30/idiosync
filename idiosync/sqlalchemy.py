@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator, BINARY
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
+from sqlalchemy.dialects import postgresql
 from .base import Attribute, Entry, User, Group, Config, WritableDatabase
 
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
@@ -39,6 +40,38 @@ class BinaryString(TypeDecorator):
         if value is None:
             return value
         return value.decode('utf-8')
+
+
+class Uuid(TypeDecorator):
+    """UUID column
+
+    This implementation is loosely based on the "Backend-agnostic GUID
+    type" recipe from the SQLAlchemy documentation.  For PostgreSQL,
+    the native backend UUID type is used; for other databases a
+    BINARY(16) is used.
+    """
+    # pylint: disable=abstract-method
+
+    impl = BINARY
+    python_type = uuid.UUID
+
+    def load_dialect_impl(self, dialect):
+        """Get corresponding TypeEngine object"""
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(postgresql.UUID(as_uuid=True))
+        return dialect.type_descriptor(BINARY(16))
+
+    def process_bind_param(self, value, dialect):
+        """Encode UUID object to raw column value"""
+        if value is None or dialect.name == 'postgresql':
+            return value
+        return value.bytes
+
+    def process_result_value(self, value, dialect):
+        """Decode raw column value to UUID object"""
+        if value is None or dialect.name == 'postgresql':
+            return value
+        return uuid.UUID(bytes=value)
 
 
 ##############################################################################
