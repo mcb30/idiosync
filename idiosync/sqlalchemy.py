@@ -30,10 +30,14 @@ class BinaryString(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         """Encode Unicode string to raw column value"""
+        if value is None:
+            return value
         return value.encode('utf-8')
 
     def process_result_value(self, value, dialect):
         """Decode raw column value to Unicode string"""
+        if value is None:
+            return value
         return value.decode('utf-8')
 
 
