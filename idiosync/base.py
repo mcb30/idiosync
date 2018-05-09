@@ -83,6 +83,11 @@ class Entry(ABC):
         """Permanent identifier for this entry"""
         pass
 
+    @classmethod
+    def prepare(cls):
+        """Prepare for use as part of an idiosync user database"""
+        pass
+
 
 class User(Entry):
     """A user"""
@@ -173,6 +178,11 @@ class Database(ABC):
     def groups(self):
         """All groups"""
         pass
+
+    def prepare(self):
+        """Prepare for use as an idiosync user database"""
+        self.User.prepare()
+        self.Group.prepare()
 
 
 class WatchableDatabase(Database):

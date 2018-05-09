@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator, BINARY
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from sqlalchemy.dialects import postgresql
+import alembic
 from .base import (Attribute, Entry, User, Group, Config, WritableDatabase,
                    SyncId)
 
@@ -156,6 +157,16 @@ class SqlEntry(Entry, metaclass=SqlEntryMeta):
         identity = inspect(self.row).identity
         return uuid.uuid5(self.uuid_ns, ':'.join(str(x) for x in identity))
 
+    @classmethod
+    def prepare(cls):
+        # Create SyncId column if needed
+        if cls.model.syncid is not None:
+            table = inspect(cls.model.orm).mapped_table
+            column = inspect(getattr(cls.model.orm, cls.model.syncid))
+            columns = inspect(cls.db.engine).get_columns(table.name)
+            if not any(x['name'] == column.name for x in columns):
+                cls.db.alembic.add_column(table.name, column.copy())
+
 
 class SqlUser(SqlEntry, User):
     """A SQL user database user"""
@@ -195,6 +206,7 @@ class SqlDatabase(WritableDatabase):
         self.engine = create_engine(self.config.uri, **self.config.options)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
+        self._alembic = None
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.config.uri)
@@ -216,3 +228,12 @@ class SqlDatabase(WritableDatabase):
     def commit(self):
         """Commit database changes"""
         self.session.commit()
+
+    @property
+    def alembic(self):
+        """Alembic migration operations"""
+        if self._alembic is None:
+            conn = self.session.connection()
+            ctx = alembic.migration.MigrationContext.configure(conn)
+            self._alembic = alembic.operations.Operations(ctx)
+        return self._alembic
