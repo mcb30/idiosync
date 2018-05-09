@@ -1,6 +1,6 @@
 """SQLAlchemy user database"""
 
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta
 import uuid
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
@@ -111,12 +111,16 @@ class SqlEntryMeta(ABCMeta):
     def __init__(cls, name, bases, dct):
         super(SqlEntryMeta, cls).__init__(name, bases, dct)
         # Construct a namespace based on the table name if applicable
-        if isinstance(cls.model, DeclarativeMeta):
-            cls.uuid_ns = uuid.uuid5(NAMESPACE_SQL, cls.model.__table__.name)
+        if cls.model is not None:
+            table = inspect(cls.model.orm).mapped_table
+            cls.uuid_ns = uuid.uuid5(NAMESPACE_SQL, table.name)
 
 
 class SqlEntry(Entry, metaclass=SqlEntryMeta):
     """A SQL user database entry"""
+
+    model = None
+    """SQLAlchemy model for this table"""
 
     uuid_ns = None
     """UUID namespace for entries within this table"""
@@ -145,12 +149,6 @@ class SqlEntry(Entry, metaclass=SqlEntryMeta):
                 getattr(self.model.orm, self.model.key) == self.key
             )
             self.row = query.one()
-
-    @property
-    @abstractmethod
-    def model(self):
-        """SQLAlchemy model"""
-        pass
 
     @property
     def uuid(self):
