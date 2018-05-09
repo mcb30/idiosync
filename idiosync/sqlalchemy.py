@@ -208,12 +208,12 @@ class SqlDatabase(WritableDatabase):
     @property
     def users(self):
         """All users"""
-        return (self.user(x) for x in self.query(self.User.model))
+        return (self.user(x) for x in self.query(self.User.model.orm))
 
     @property
     def groups(self):
         """All groups"""
-        return (self.group(x) for x in self.query(self.Group.model))
+        return (self.group(x) for x in self.query(self.Group.model.orm))
 
     def commit(self):
         """Commit database changes"""
