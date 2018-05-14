@@ -2,7 +2,7 @@
 
 import logging
 from .base import RefreshComplete
-from .ldap import LdapEntryUuidAttribute, LdapModel
+from .ldap import LdapBooleanAttribute, LdapEntryUuidAttribute, LdapModel
 from .rfc2307 import Rfc2307User, Rfc2307Group, Rfc2307Config, Rfc2307Database
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,13 @@ class IpaUser(Rfc2307User):
     model = LdapModel('inetOrgPerson', 'uid',
                       lambda x: '(memberOf=%s)' % x.dn)
 
+    disabled = LdapBooleanAttribute('nsAccountLock')
     uuid = LdapEntryUuidAttribute('nsUniqueId')
+
+    @property
+    def enabled(self):
+        """User is enabled"""
+        return not self.disabled
 
 
 class IpaGroup(Rfc2307Group):
