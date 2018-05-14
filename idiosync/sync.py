@@ -92,6 +92,10 @@ class EntrySynchronizer(ABC):
         if dst.name != src.name:
             dst.name = src.name
 
+        # Synchronize enabled status
+        if dst.enabled != src.enabled:
+            dst.enabled = src.enabled
+
         # Synchronize attributes
         for attr in self.attrs:
             attrsync = getattr(self, attr)

@@ -70,6 +70,9 @@ class Entry(ABC):
     user database class is instantiated.
     """
 
+    enabled = True
+    """User database entry is enabled"""
+
     @property
     def name(self):
         """Canonical name"""
