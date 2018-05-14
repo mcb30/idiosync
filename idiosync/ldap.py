@@ -104,6 +104,16 @@ class LdapNumericAttribute(LdapAttribute):
         return int(value)
 
 
+class LdapBooleanAttribute(LdapAttribute):
+    """A boolean LDAP attribute"""
+    # pylint: disable=too-few-public-methods
+
+    @staticmethod
+    def parse(value):
+        """Parse attribute value"""
+        return value.lower() == b'true'
+
+
 class LdapUuidAttribute(LdapAttribute):
     """A UUID LDAP attribute"""
     # pylint: disable=too-few-public-methods
