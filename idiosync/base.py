@@ -60,6 +60,9 @@ class Entry(ABC):
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.key)
 
+    def __str__(self):
+        return self.name
+
     db = None
     """Containing user database
 
