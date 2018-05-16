@@ -5,11 +5,10 @@ import uuid
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator, BINARY
-from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from sqlalchemy.dialects import postgresql
 import alembic
-from .base import (Attribute, Entry, User, Group, Config, WritableDatabase,
-                   SyncId)
+from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
+                   Config, WritableDatabase)
 
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
 
@@ -117,7 +116,7 @@ class SqlEntryMeta(ABCMeta):
             cls.uuid_ns = uuid.uuid5(NAMESPACE_SQL, table.name)
 
 
-class SqlEntry(Entry, metaclass=SqlEntryMeta):
+class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
     """A SQL user database entry"""
 
     model = None
@@ -126,36 +125,47 @@ class SqlEntry(Entry, metaclass=SqlEntryMeta):
     uuid_ns = None
     """UUID namespace for entries within this table"""
 
-    def __init__(self, key):
-        super(SqlEntry, self).__init__(key)
-        if isinstance(type(self.key), DeclarativeMeta):
+    def __init__(self, row):
+        super(SqlEntry, self).__init__()
+        self.row = row
 
-            # Key is a prefetched SQLAlchemy row
-            self.row = self.key
-            self.key = getattr(self.row, self.model.key)
-
-        elif isinstance(self.key, SyncId):
-
-            # Key is a synchronization identifier
-            query = self.db.query(self.model.orm).filter(
-                getattr(self.model.orm, self.model.syncid) == self.key
-            )
-            self.row = query.one()
-            self.key = getattr(self.row, self.model.key)
-
-        else:
-
-            # Key is a column value
-            query = self.db.query(self.model.orm).filter(
-                getattr(self.model.orm, self.model.key) == self.key
-            )
-            self.row = query.one()
+    @property
+    def key(self):
+        """Canonical lookup key"""
+        return getattr(self.row, self.model.key)
 
     @property
     def uuid(self):
         """Permanent identifier for this entry"""
         identity = inspect(self.row).identity
         return uuid.uuid5(self.uuid_ns, ':'.join(str(x) for x in identity))
+
+    @property
+    def syncid(self):
+        """Synchronization identifier"""
+        return getattr(self.row, self.model.syncid)
+
+    @syncid.setter
+    def syncid(self, value):
+        """Synchronization identifier"""
+        setattr(self.row, self.model.syncid, value)
+
+    @classmethod
+    def find_query(cls, search):
+        """Search for user database entry"""
+        row = cls.db.query(cls.model.orm).filter(search).one_or_none()
+        return cls(row) if row is not None else None
+
+    @classmethod
+    def find(cls, key):
+        """Look up user database entry"""
+        attr = getattr(cls.model.orm, cls.model.key)
+        return cls.find_query(attr == key)
+
+    @classmethod
+    def find_syncid(cls, syncid):
+        attr = getattr(cls.model.orm, cls.model.syncid)
+        return cls.find_query(attr == syncid)
 
     @classmethod
     def prepare(cls):
@@ -168,13 +178,13 @@ class SqlEntry(Entry, metaclass=SqlEntryMeta):
                 cls.db.alembic.add_column(table.name, column.copy())
 
 
-class SqlUser(SqlEntry, User):
+class SqlUser(SqlEntry, WritableUser):
     """A SQL user database user"""
     # pylint: disable=abstract-method
     pass
 
 
-class SqlGroup(SqlEntry, Group):
+class SqlGroup(SqlEntry, WritableGroup):
     """A SQL user database group"""
     # pylint: disable=abstract-method
     pass
@@ -218,12 +228,12 @@ class SqlDatabase(WritableDatabase):
     @property
     def users(self):
         """All users"""
-        return (self.user(x) for x in self.query(self.User.model.orm))
+        return (self.User(x) for x in self.query(self.User.model.orm))
 
     @property
     def groups(self):
         """All groups"""
-        return (self.group(x) for x in self.query(self.Group.model.orm))
+        return (self.Group(x) for x in self.query(self.Group.model.orm))
 
     def commit(self):
         """Commit database changes"""

@@ -5,31 +5,6 @@ from collections.abc import Iterable
 import uuid
 import weakref
 
-##############################################################################
-#
-# Exceptions
-
-
-class NoSuchEntryError(Exception):
-    """User database entry does not exist"""
-
-    def __str__(self):
-        return "No such entry: '%s'" % self.args
-
-
-class NoSuchUserError(NoSuchEntryError):
-    """User does not exist"""
-
-    def __str__(self):
-        return "No such user: '%s'" % self.args
-
-
-class NoSuchGroupError(NoSuchEntryError):
-    """Group does not exist"""
-
-    def __str__(self):
-        return "No such group: '%s'" % self.args
-
 
 ##############################################################################
 #
@@ -52,16 +27,11 @@ class Entry(ABC):
     """A user database entry"""
     # pylint: disable=too-few-public-methods
 
-    NoSuchEntryError = NoSuchEntryError
-
-    def __init__(self, key):
-        self.key = key
-
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.key)
 
     def __str__(self):
-        return self.name
+        return str(self.key)
 
     db = None
     """Containing user database
@@ -74,19 +44,20 @@ class Entry(ABC):
     """User database entry is enabled"""
 
     @property
-    def name(self):
-        """Canonical name"""
-        return self.key
-
-    @staticmethod
-    def match(other):
-        """Identify matching user database entry"""
-        return other.name
+    @abstractmethod
+    def key(self):
+        """Canonical lookup key"""
 
     @property
     @abstractmethod
     def uuid(self):
         """Permanent identifier for this entry"""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def find(cls, key):
+        """Look up user database entry"""
         pass
 
     @classmethod
@@ -99,7 +70,9 @@ class User(Entry):
     """A user"""
     # pylint: disable=too-few-public-methods
 
-    NoSuchEntryError = NoSuchUserError
+    def __repr__(self):
+        # Call __repr__ explicitly to bypass weakproxy
+        return "%s.user(%r)" % (self.db.__repr__(), self.key)
 
     @property
     @abstractmethod
@@ -112,13 +85,48 @@ class Group(Entry):
     """A group"""
     # pylint: disable=too-few-public-methods
 
-    NoSuchEntryError = NoSuchGroupError
+    def __repr__(self):
+        # Call __repr__ explicitly to bypass weakproxy
+        return "%s.group(%r)" % (self.db.__repr__(), self.key)
 
     @property
     @abstractmethod
     def users(self):
         """Users who are members of this group"""
         pass
+
+
+class WritableEntry(Entry):
+    """A writable user database entry"""
+
+    @property
+    @abstractmethod
+    def syncid(self):
+        """Synchronization identifier"""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def find_syncid(cls, syncid):
+        """Look up user database entry by synchronization identifier"""
+        pass
+
+    @classmethod
+    def find_match(cls, entry):
+        """Look up closest matching user database entry"""
+        return cls.find(entry.key)
+
+
+class WritableUser(WritableEntry, User):
+    """A writable user"""
+    # pylint: disable=abstract-method
+    pass
+
+
+class WritableGroup(WritableEntry, Group):
+    """A writable group"""
+    # pylint: disable=abstract-method
+    pass
 
 
 ##############################################################################
@@ -162,16 +170,19 @@ class Database(ABC):
         """Group class for this database"""
 
     def user(self, key):
-        """Fetch user"""
-        if isinstance(key, User):
-            key = self.User.match(key)
-        return self.User(key)
+        """Look up user"""
+        return self.User.find(key)
 
     def group(self, key):
-        """Fetch group"""
-        if isinstance(key, Group):
-            key = self.Group.match(key)
-        return self.Group(key)
+        """Look up group"""
+        return self.Group.find(key)
+
+    def find(self, key):
+        """Look up user database entry"""
+        entry = self.user(key)
+        if entry is None:
+            entry = self.group(key)
+        return entry
 
     @property
     @abstractmethod

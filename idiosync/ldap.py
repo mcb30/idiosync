@@ -168,29 +168,29 @@ class LdapEntry(Entry):
     memberOf = LdapStringAttribute('memberOf', multi=True)
     uuid = LdapEntryUuidAttribute('entryUUID')
 
-    def __init__(self, key):
-        super(LdapEntry, self).__init__(key)
-        if isinstance(self.key, tuple):
+    model = None
+    """LDAP model"""
 
-            # Key is a prefetched LDAP entry
-            (self.dn, self.attrs) = self.key
-            self.key = self.attrs[self.model.key.lower()][0].decode()
-
-        else:
-
-            # Key is a search attribute
-            res = self.db.search(self.model.single(self.key))
-            try:
-                [(self.dn, attrs)] = res
-            except ValueError:
-                raise self.NoSuchEntryError(self.key) from None
-            self.attrs = LdapAttributeDict(attrs)
+    def __init__(self, dn, attrs):
+        super(LdapEntry, self).__init__()
+        self.dn = dn
+        self.attrs = (attrs if isinstance(attrs, LdapAttributeDict)
+                      else LdapAttributeDict(attrs))
 
     @property
-    @abstractmethod
-    def model(self):
-        """LDAP model"""
-        pass
+    def key(self):
+        """Canonical lookup key"""
+        return self.attrs[self.model.key.lower()][0].decode()
+
+    @classmethod
+    def find(cls, key):
+        """Look up user database entry"""
+        res = cls.db.search(cls.model.single(key))
+        try:
+            [(dn, attrs)] = res
+        except ValueError:
+            return None
+        return cls(dn, attrs)
 
 
 class LdapUser(LdapEntry, User):
@@ -214,7 +214,7 @@ class LdapUser(LdapEntry, User):
     @property
     def groups(self):
         """Groups of which this user is a member"""
-        return (self.db.group(x) for x in
+        return (self.db.Group(dn, attrs) for dn, attrs in
                 self.db.search(self.db.Group.model.membership(self)))
 
 
@@ -231,7 +231,7 @@ class LdapGroup(LdapEntry, Group):
     @property
     def users(self):
         """Users who are members of this group"""
-        return (self.db.user(x) for x in
+        return (self.db.User(dn, attrs) for dn, attrs in
                 self.db.search(self.db.User.model.membership(self)))
 
 
@@ -299,12 +299,14 @@ class LdapDatabase(WatchableDatabase):
     @property
     def users(self):
         """All users"""
-        return (self.user(x) for x in self.search(self.User.model.all))
+        return (self.User(dn, attrs) for dn, attrs in
+                self.search(self.User.model.all))
 
     @property
     def groups(self):
         """All groups"""
-        return (self.group(x) for x in self.search(self.Group.model.all))
+        return (self.Group(dn, attrs) for dn, attrs in
+                self.search(self.Group.model.all))
 
     def _watch_res_search_entry(self, dn, attrs, sync):
         """Process watch search entry"""
@@ -331,14 +333,14 @@ class LdapDatabase(WatchableDatabase):
             for objectClass in attrs['objectclass']:
                 objectClass = objectClass.decode().lower()
                 if objectClass == user_objectClass:
-                    constructor = self.user
+                    constructor = self.User
                     break
                 elif objectClass == group_objectClass:
-                    constructor = self.group
+                    constructor = self.Group
                     break
             if constructor is None:
                 raise LdapUnrecognisedEntryError(dn)
-            entry = constructor((dn, attrs))
+            entry = constructor(dn, attrs)
             if entry.uuid is None:
                 entry.uuid = syncid
             elif entry.uuid != syncid:

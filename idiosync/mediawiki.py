@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from .base import Group
+from .base import WritableGroup
 from .sqlalchemy import (BinaryString, Uuid, SqlModel, SqlAttribute, SqlUser,
                          SqlConfig, SqlDatabase)
 
@@ -50,24 +50,43 @@ class OrmUserGroup(Base):
 # User database model
 
 
+class MediaWikiUidAttribute(SqlAttribute):
+    """A MediaWiki user name"""
+    # pylint: disable=too-few-public-methods
+
+    def __get__(self, instance, owner):
+        """Get user name"""
+        if instance is None:
+            return self
+        name = super(MediaWikiUidAttribute, self).__get__(instance, owner)
+        return instance.format_uid(name)
+
+    def __set__(self, instance, value):
+        """Set user name"""
+        name = instance.parse_uid(value)
+        super(MediaWikiUidAttribute, self).__set__(instance, name)
+
+
 class MediaWikiUser(SqlUser):
     """A MediaWiki user"""
+    # pylint: disable=too-many-ancestors
 
     model = SqlModel(OrmUser, 'user_name', 'user_idiosyncid')
-
+    uid = MediaWikiUidAttribute('user_name')
     displayName = SqlAttribute('user_real_name')
     mail = SqlAttribute('user_email')
-    syncid = SqlAttribute('user_idiosyncid')
 
     @classmethod
-    def format_name(cls, name):
+    def format_uid(cls, name):
         """Format user name to external representation"""
+        if name is None:
+            return None
         if not cls.db.config.title_case:
             return name
         return name[0].lower() + name[1:]
 
     @classmethod
-    def parse_name(cls, name):
+    def parse_uid(cls, name):
         """Parse user name to database representation"""
         if not cls.db.config.title_case:
             return name
@@ -75,42 +94,30 @@ class MediaWikiUser(SqlUser):
             raise ValueError("User name must begin with a lower-case character")
         return name[0].upper() + name[1:]
 
-    @property
-    def name(self):
-        """User name"""
-        return self.format_name(self.row.user_name)
-
-    @name.setter
-    def name(self, value):
-        """User name"""
-        self.row.user_name = self.parse_name(value)
-
     @classmethod
-    def match(cls, other):
-        """Identify matching user database entry"""
-        return cls.parse_name(other.name)
+    def find_match(cls, entry):
+        """Look up closest matching user database entry"""
+        return cls.find(cls.parse_uid(entry.key))
 
     @property
     def groups(self):
         """Groups of which this user is a member"""
-        return (self.db.group(x.ug_group) for x in self.row.user_groups)
+        return (self.db.Group(x.ug_group) for x in self.row.user_groups)
 
 
-class MediaWikiGroup(Group):
+class MediaWikiGroup(WritableGroup):
     """A MediaWiki group
 
     The MediaWiki database has no table for group definitions: groups
     exist solely as free text strings mentioned as group names within
-    the ``user_group`` table.
+    the ``user_group`` table.  A group exists if and only if it has
+    members; there is no separate concept of group existence.
     """
 
-    @property
-    def users(self):
-        """Users who are members of this group"""
-        query = self.db.query(OrmUser).join(OrmUserGroup).filter(
-            OrmUserGroup.ug_group == self.key
-        )
-        return (self.db.user(x) for x in query)
+    key = None
+
+    def __init__(self, key):
+        self.key = key
 
     @property
     def uuid(self):
@@ -118,6 +125,34 @@ class MediaWikiGroup(Group):
         # Generate UUID from group name since there is no concept of
         # permanent identity for MediaWiki groups
         return uuid.uuid5(NAMESPACE_MEDIAWIKI, self.key)
+
+    @property
+    def syncid(self):
+        """Synchronization identifier"""
+        return None
+
+    @syncid.setter
+    def syncid(self, value):
+        """Set synchronization identifier"""
+        pass
+
+    @classmethod
+    def find(cls, key):
+        """Look up user database entry"""
+        return cls(key)
+
+    @classmethod
+    def find_syncid(cls, syncid):
+        """Look up user database entry by synchronization identifier"""
+        return None
+
+    @property
+    def users(self):
+        """Users who are members of this group"""
+        query = self.db.query(OrmUser).join(OrmUserGroup).filter(
+            OrmUserGroup.ug_group == self.key
+        )
+        return (self.db.User(x) for x in query)
 
 
 class MediaWikiConfig(SqlConfig):
@@ -141,4 +176,4 @@ class MediaWikiDatabase(SqlDatabase):
     def groups(self):
         """All groups"""
         query = self.query(OrmUserGroup.ug_group).distinct()
-        return (self.group(x.ug_group) for x in query)
+        return (self.Group(x.ug_group) for x in query)

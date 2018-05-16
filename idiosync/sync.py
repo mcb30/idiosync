@@ -88,9 +88,9 @@ class EntrySynchronizer(ABC):
     def sync(self, src, dst):
         """Synchronize entries"""
 
-        # Synchronize canonical name
-        if dst.name != src.name:
-            dst.name = src.name
+        # Synchronize synchronization identifier
+        if dst.syncid != src.uuid:
+            dst.syncid = src.uuid
 
         # Synchronize enabled status
         if dst.enabled != src.enabled:
@@ -107,7 +107,7 @@ class UserSynchronizer(EntrySynchronizer):
 
     attrs = ['commonName', 'displayName', 'employeeNumber', 'givenName',
              'initials', 'mail', 'mobile', 'surname', 'telephoneNumber',
-             'title']
+             'title', 'uid']
 
 
 class GroupSynchronizer(EntrySynchronizer):
