@@ -1,6 +1,11 @@
 """User database synchronization"""
 
 from abc import ABC, abstractmethod
+import logging
+from .base import (Entry, User, SyncId, SyncIds, UnchangedSyncIds,
+                   DeletedSyncIds, RefreshComplete)
+
+logger = logging.getLogger(__name__)
 
 
 class TooManyValuesError(TypeError):
@@ -131,3 +136,72 @@ class DatabaseSynchronizer(object):
 
     def __repr__(self):
         return "%s(%r,%r)" % (self.__class__.__name__, self.src, self.dst)
+
+    def sync(self, oneshot=False, strict=False):
+        """Synchronize database"""
+        # pylint: disable=too-many-branches
+
+        # Prepare destination database
+        self.dst.prepare()
+
+        # Refresh database and watch for changes
+        syncids = set()
+        for src in self.src.watch(oneshot=oneshot):
+            if isinstance(src, Entry):
+
+                # Construct synchronization identifier
+                syncid = SyncId(uuid=src.uuid)
+
+                # Add to list of observed synchronization identifiers
+                if syncids is not None:
+                    syncids |= {syncid}
+
+                # Determine type of entry
+                if isinstance(src, User):
+                    syncer = self.user
+                    DstEntry = self.dst.User
+                else:
+                    syncer = self.group
+                    DstEntry = self.dst.Group
+
+                # Identify or create corresponding destination entry
+                dst = DstEntry.find_syncid(syncid)
+                if dst is None and not strict:
+                    logger.info("guessing matching entry for %s", src)
+                    dst = DstEntry.find_match(src)
+                if dst is None:
+                    logger.info("creating new entry for %s", src)
+                    dst = DstEntry.create()
+
+                # Synchronize entry
+                logger.info("synchronizing entry %s", src)
+                syncer.sync(src, dst)
+
+                # Commit changes unless this is part of a bulk refresh
+                if not syncids:
+                    self.dst.commit()
+
+            elif isinstance(src, UnchangedSyncIds):
+
+                # Add to list of observed synchronization identifiers
+                if syncids is not None:
+                    syncids |= set(src)
+
+            elif isinstance(src, DeletedSyncIds):
+
+                # Delete synchronization identifiers
+                self.dst.delete(src)
+
+            elif isinstance(src, RefreshComplete):
+
+                # Delete unmentioned synchronization identifiers if applicable
+                if syncids is not None and src.autodelete:
+                    logger.info("deleting unmentioned entries")
+                    self.dst.prune(SyncIds(syncids))
+
+                # Clear list of synchronization identifiers
+                syncids = None
+
+                # Commit changes
+                logger.info("refresh complete")
+                self.dst.commit()
