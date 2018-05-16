@@ -126,8 +126,8 @@ class DatabaseSynchronizer(object):
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
-        self.UserSynchronizer = self.UserSynchronizer(src.User, dst.User)
-        self.GroupSynchronizer = self.GroupSynchronizer(src.Group, dst.Group)
+        self.user = self.UserSynchronizer(src.User, dst.User)
+        self.group = self.GroupSynchronizer(src.Group, dst.Group)
 
     def __repr__(self):
         return "%s(%r,%r)" % (self.__class__.__name__, self.src, self.dst)
