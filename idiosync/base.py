@@ -116,6 +116,24 @@ class WritableEntry(Entry):
         """Look up closest matching user database entry"""
         return cls.find(entry.key)
 
+    @classmethod
+    @abstractmethod
+    def create(cls):
+        """Create new user database entry"""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def delete(cls, syncids):
+        """Delete all of the specified entries"""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def prune(cls, syncids):
+        """Delete all synchronized entries except the specified entries"""
+        pass
+
 
 class WritableUser(WritableEntry, User):
     """A writable user"""
@@ -213,6 +231,16 @@ class WatchableDatabase(Database):
 
 class WritableDatabase(Database):
     """A writable user database"""
+
+    def delete(self, syncids):
+        """Delete all of the specified entries"""
+        self.User.delete(syncids)
+        self.Group.delete(syncids)
+
+    def prune(self, syncids):
+        """Delete all synchronized entries except the specified entries"""
+        self.User.prune(syncids)
+        self.Group.prune(syncids)
 
     @abstractmethod
     def commit(self):

@@ -168,6 +168,31 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
         return cls.find_query(attr == syncid)
 
     @classmethod
+    def create(cls):
+        """Create new user database entry"""
+        row = cls.model.orm()
+        cls.db.session.add(row)
+        return cls(row)
+
+    @classmethod
+    def delete(cls, syncids):
+        """Delete all of the specified entries"""
+        attr = getattr(cls.model.orm, cls.model.syncid)
+        cls.db.session.flush()
+        cls.db.query(cls.model.orm).filter(
+            attr.isnot(None), attr.in_(syncids)
+        ).delete(synchronize_session=False)
+
+    @classmethod
+    def prune(cls, syncids):
+        """Delete all synchronized entries except the specified entries"""
+        attr = getattr(cls.model.orm, cls.model.syncid)
+        cls.db.session.flush()
+        cls.db.query(cls.model.orm).filter(
+            attr.isnot(None), ~attr.in_(syncids)
+        ).delete(synchronize_session=False)
+
+    @classmethod
     def prepare(cls):
         # Create SyncId column if needed
         if cls.model.syncid is not None:

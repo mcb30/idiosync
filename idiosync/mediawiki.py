@@ -26,8 +26,10 @@ class OrmUser(Base):
 
     user_id = Column(Integer, primary_key=True)
     user_name = Column(BinaryString, nullable=False, unique=True)
-    user_real_name = Column(BinaryString, nullable=False)
-    user_email = Column(BinaryString, nullable=False)
+    user_real_name = Column(BinaryString, nullable=False, default='')
+    user_password = Column(BinaryString, nullable=False, default='')
+    user_newpassword = Column(BinaryString, nullable=False, default='')
+    user_email = Column(BinaryString, nullable=False, default='')
     user_idiosyncid = Column(Uuid, unique=True)
 
     user_groups = relationship('OrmUserGroup', back_populates='user')
@@ -145,6 +147,21 @@ class MediaWikiGroup(WritableGroup):
     def find_syncid(cls, syncid):
         """Look up user database entry by synchronization identifier"""
         return None
+
+    @classmethod
+    def create(cls):
+        """Create new user database entry"""
+        return cls(None)
+
+    @classmethod
+    def delete(cls, syncids):
+        """Delete all of the specified entries"""
+        pass
+
+    @classmethod
+    def prune(cls, syncids):
+        """Delete all synchronized entries except the specified entries"""
+        pass
 
     @property
     def users(self):
