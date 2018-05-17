@@ -40,9 +40,6 @@ class Entry(ABC):
     user database class is instantiated.
     """
 
-    enabled = True
-    """User database entry is enabled"""
-
     @property
     @abstractmethod
     def key(self):
@@ -53,6 +50,11 @@ class Entry(ABC):
     def uuid(self):
         """Permanent identifier for this entry"""
         pass
+
+    @property
+    def enabled(self):
+        """User database entry is enabled"""
+        return True
 
     @classmethod
     @abstractmethod

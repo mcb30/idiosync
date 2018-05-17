@@ -1,5 +1,6 @@
 """MediaWiki user database"""
 
+from datetime import datetime
 import uuid
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
@@ -33,6 +34,8 @@ class OrmUser(Base):
     user_idiosyncid = Column(UuidChar, unique=True)
 
     user_groups = relationship('OrmUserGroup', back_populates='user')
+    ipblocks = relationship('OrmIpBlock', back_populates='user',
+                            cascade='all, delete-orphan')
 
 
 class OrmUserGroup(Base):
@@ -45,6 +48,25 @@ class OrmUserGroup(Base):
     ug_group = Column(BinaryString, primary_key=True)
 
     user = relationship('OrmUser', back_populates='user_groups')
+
+
+class OrmIpBlock(Base):
+    """A MediaWiki IP or user block"""
+    # pylint: disable=too-few-public-methods
+
+    __tablename__ = 'ipblocks'
+
+    ipb_id = Column(Integer, primary_key=True)
+    ipb_address = Column(BinaryString, nullable=False, default='')
+    ipb_user = Column(ForeignKey('user.user_id'), nullable=False)
+    ipb_reason = Column(BinaryString, nullable=False, default='Disabled user')
+    ipb_timestamp = Column(BinaryString, nullable=False, default=lambda:
+                           datetime.now().strftime('%Y%m%d%H%M%S'))
+    ipb_expiry = Column(BinaryString, nullable=False, default='infinity')
+    ipb_range_start = Column(BinaryString, nullable=False, default='')
+    ipb_range_end = Column(BinaryString, nullable=False, default='')
+
+    user = relationship('OrmUser', back_populates='ipblocks')
 
 
 ##############################################################################
@@ -77,6 +99,19 @@ class MediaWikiUser(SqlUser):
     uid = MediaWikiUidAttribute('user_name')
     displayName = SqlAttribute('user_real_name')
     mail = SqlAttribute('user_email')
+
+    @property
+    def enabled(self):
+        """User is enabled"""
+        return not self.row.ipblocks
+
+    @enabled.setter
+    def enabled(self, value):
+        """User is enabled"""
+        if value:
+            self.row.ipblocks.clear()
+        else:
+            self.row.ipblocks.append(OrmIpBlock(ipb_address=self.uid))
 
     @classmethod
     def format_uid(cls, name):
