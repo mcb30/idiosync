@@ -5,8 +5,8 @@ from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from .base import WritableGroup
-from .sqlalchemy import (BinaryString, Uuid, SqlModel, SqlAttribute, SqlUser,
-                         SqlConfig, SqlDatabase)
+from .sqlalchemy import (BinaryString, UuidChar, SqlModel, SqlAttribute,
+                         SqlUser, SqlConfig, SqlDatabase)
 
 NAMESPACE_MEDIAWIKI = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
 
@@ -30,7 +30,7 @@ class OrmUser(Base):
     user_password = Column(BinaryString, nullable=False, default='')
     user_newpassword = Column(BinaryString, nullable=False, default='')
     user_email = Column(BinaryString, nullable=False, default='')
-    user_idiosyncid = Column(Uuid, unique=True)
+    user_idiosyncid = Column(UuidChar, unique=True)
 
     user_groups = relationship('OrmUserGroup', back_populates='user')
 

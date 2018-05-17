@@ -4,7 +4,7 @@ from abc import ABCMeta
 import uuid
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.types import TypeDecorator, BINARY
+from sqlalchemy.types import TypeDecorator, BINARY, String
 from sqlalchemy.dialects import postgresql
 import alembic
 from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
@@ -43,7 +43,7 @@ class BinaryString(TypeDecorator):
         return value.decode('utf-8')
 
 
-class Uuid(TypeDecorator):
+class UuidBinary(TypeDecorator):
     """UUID column
 
     This implementation is loosely based on the "Backend-agnostic GUID
@@ -73,6 +73,43 @@ class Uuid(TypeDecorator):
         if value is None or dialect.name == 'postgresql':
             return value
         return uuid.UUID(bytes=value)
+
+
+class UuidChar(TypeDecorator):
+    """UUID column
+
+    This implementation is loosely based on the "Backend-agnostic GUID
+    type" recipe from the SQLAlchemy documentation.  For PostgreSQL,
+    the native backend UUID type is used; for other databases a
+    CHAR(36) is used.
+
+    Backends that erroneously choose to return bytes instead of
+    strings are handled transparently.
+    """
+    # pylint: disable=abstract-method
+
+    impl = String
+    python_type = uuid.UUID
+
+    def load_dialect_impl(self, dialect):
+        """Get corresponding TypeEngine object"""
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(postgresql.UUID(as_uuid=True))
+        return dialect.type_descriptor(String(36))
+
+    def process_bind_param(self, value, dialect):
+        """Encode UUID object to raw column value"""
+        if value is None or dialect.name == 'postgresql':
+            return value
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        """Decode raw column value to UUID object"""
+        if value is None or dialect.name == 'postgresql':
+            return value
+        if isinstance(value, bytes):
+            return uuid.UUID(value.decode())
+        return uuid.UUID(value)
 
 
 ##############################################################################
