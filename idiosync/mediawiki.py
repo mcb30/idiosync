@@ -1,15 +1,12 @@
 """MediaWiki user database"""
 
 from datetime import datetime
-import uuid
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from .base import WritableGroup
 from .sqlalchemy import (BinaryString, UuidChar, SqlModel, SqlAttribute,
                          SqlUser, SqlConfig, SqlDatabase)
-
-NAMESPACE_MEDIAWIKI = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
+from .dummy import DummyGroup
 
 ##############################################################################
 #
@@ -142,61 +139,13 @@ class MediaWikiUser(SqlUser):
         return (self.db.Group(x.ug_group) for x in self.row.user_groups)
 
 
-class MediaWikiGroup(WritableGroup):
+class MediaWikiGroup(DummyGroup):
     """A MediaWiki group
 
     The MediaWiki database has no table for group definitions: groups
     exist solely as free text strings mentioned as group names within
-    the ``user_group`` table.  A group exists if and only if it has
-    members; there is no separate concept of group existence.
+    the ``user_group`` table.
     """
-
-    key = None
-
-    def __init__(self, key):
-        self.key = key
-
-    @property
-    def uuid(self):
-        """Permanent identifier for this entry"""
-        # Generate UUID from group name since there is no concept of
-        # permanent identity for MediaWiki groups
-        return uuid.uuid5(NAMESPACE_MEDIAWIKI, self.key)
-
-    @property
-    def syncid(self):
-        """Synchronization identifier"""
-        return None
-
-    @syncid.setter
-    def syncid(self, value):
-        """Set synchronization identifier"""
-        pass
-
-    @classmethod
-    def find(cls, key):
-        """Look up user database entry"""
-        return cls(key)
-
-    @classmethod
-    def find_syncid(cls, syncid):
-        """Look up user database entry by synchronization identifier"""
-        return None
-
-    @classmethod
-    def create(cls):
-        """Create new user database entry"""
-        return cls(None)
-
-    @classmethod
-    def delete(cls, syncids):
-        """Delete all of the specified entries"""
-        pass
-
-    @classmethod
-    def prune(cls, syncids):
-        """Delete all synchronized entries except the specified entries"""
-        pass
 
     @property
     def users(self):
