@@ -46,7 +46,8 @@ class OrmUser(Base):
     MobilePhone = Column(String)
     IdiosyncId = Column(UuidChar, unique=True)
 
-    principal = relationship('OrmPrincipal', back_populates='user')
+    principal = relationship('OrmPrincipal', back_populates='user',
+                             lazy='joined')
     memberships = relationship('OrmMember', back_populates='user')
     groups = association_proxy('memberships', 'group')
 
@@ -65,7 +66,8 @@ class OrmGroup(Base):
     Description = Column(String)
     IdiosyncId = Column(UuidChar, unique=True)
 
-    principal = relationship('OrmPrincipal', back_populates='group')
+    principal = relationship('OrmPrincipal', back_populates='group',
+                             lazy='joined')
     memberships = relationship('OrmMember', back_populates='group')
     users = association_proxy('memberships', 'user')
 
