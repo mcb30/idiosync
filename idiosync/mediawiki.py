@@ -18,7 +18,6 @@ Base = declarative_base()
 
 class OrmUser(Base):
     """A MediaWiki user"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'user'
 
@@ -37,7 +36,6 @@ class OrmUser(Base):
 
 class OrmUserGroup(Base):
     """A MediaWiki group membership"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'user_groups'
 
@@ -49,7 +47,6 @@ class OrmUserGroup(Base):
 
 class OrmIpBlock(Base):
     """A MediaWiki IP or user block"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'ipblocks'
 
@@ -73,7 +70,6 @@ class OrmIpBlock(Base):
 
 class MediaWikiUidAttribute(SqlAttribute):
     """A MediaWiki user name"""
-    # pylint: disable=too-few-public-methods
 
     def __get__(self, instance, owner):
         """Get user name"""
@@ -90,7 +86,6 @@ class MediaWikiUidAttribute(SqlAttribute):
 
 class MediaWikiUser(SqlUser):
     """A MediaWiki user"""
-    # pylint: disable=too-many-ancestors
 
     model = SqlModel(OrmUser, 'user_name', syncid='user_idiosyncid')
     uid = MediaWikiUidAttribute('user_name')
@@ -158,7 +153,6 @@ class MediaWikiGroup(DummyGroup):
 
 class MediaWikiConfig(SqlConfig):
     """MediaWiki user database configuration"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, title_case=True, **kwargs):
         super(MediaWikiConfig, self).__init__(**kwargs)
@@ -167,7 +161,6 @@ class MediaWikiConfig(SqlConfig):
 
 class MediaWikiDatabase(SqlDatabase):
     """A MediaWiki user database"""
-    # pylint: disable=too-few-public-methods
 
     Config = MediaWikiConfig
     User = MediaWikiUser

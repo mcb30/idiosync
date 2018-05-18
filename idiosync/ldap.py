@@ -63,7 +63,6 @@ class LdapSyncIdMismatchError(Exception):
 
 class LdapAttribute(Attribute):
     """An LDAP attribute"""
-    # pylint: disable=too-few-public-methods
 
     def __get__(self, instance, owner):
         """Get attribute value"""
@@ -86,7 +85,6 @@ class LdapAttribute(Attribute):
 
 class LdapStringAttribute(LdapAttribute):
     """A string-valued LDAP attribute"""
-    # pylint: disable=too-few-public-methods
 
     @staticmethod
     def parse(value):
@@ -96,7 +94,6 @@ class LdapStringAttribute(LdapAttribute):
 
 class LdapNumericAttribute(LdapAttribute):
     """A numeric LDAP attribute"""
-    # pylint: disable=too-few-public-methods
 
     @staticmethod
     def parse(value):
@@ -106,7 +103,6 @@ class LdapNumericAttribute(LdapAttribute):
 
 class LdapBooleanAttribute(LdapAttribute):
     """A boolean LDAP attribute"""
-    # pylint: disable=too-few-public-methods
 
     @staticmethod
     def parse(value):
@@ -116,7 +112,6 @@ class LdapBooleanAttribute(LdapAttribute):
 
 class LdapUuidAttribute(LdapAttribute):
     """A UUID LDAP attribute"""
-    # pylint: disable=too-few-public-methods
 
     @staticmethod
     def parse(value):
@@ -126,7 +121,6 @@ class LdapUuidAttribute(LdapAttribute):
 
 class LdapEntryUuidAttribute(LdapUuidAttribute):
     """An EntryUUID LDAP attribute"""
-    # pylint: disable=too-few-public-methods
 
     def __set__(self, instance, value):
         # Allow EntryUUID to be populated from syncStateControl value
@@ -162,7 +156,6 @@ class LdapModel(object):
 
 class LdapEntry(Entry):
     """An LDAP directory entry"""
-    # pylint: disable=too-few-public-methods
 
     member = LdapStringAttribute('member', multi=True)
     memberOf = LdapStringAttribute('memberOf', multi=True)
@@ -242,7 +235,6 @@ class LdapGroup(LdapEntry, Group):
 
 class LdapConfig(Config):
     """LDAP user database configuration"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, uri=None, domain='', base=None, sasl_mech='GSSAPI',
                  username=None, password=None, **kwargs):

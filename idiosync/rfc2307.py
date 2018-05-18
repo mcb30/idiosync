@@ -30,7 +30,6 @@ class Rfc2307Group(LdapGroup):
 
 class Rfc2307Config(LdapConfig):
     """An RFC2307 user database configuration"""
-    # pylint: disable=too-few-public-methods
     pass
 
 

@@ -13,7 +13,6 @@ import weakref
 
 class Attribute(ABC):
     """A user database entry attribute"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, name, multi=False):
         self.name = name
@@ -25,7 +24,6 @@ class Attribute(ABC):
 
 class Entry(ABC):
     """A user database entry"""
-    # pylint: disable=too-few-public-methods
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.key)
@@ -70,7 +68,6 @@ class Entry(ABC):
 
 class User(Entry):
     """A user"""
-    # pylint: disable=too-few-public-methods
 
     def __repr__(self):
         # Call __repr__ explicitly to bypass weakproxy
@@ -85,7 +82,6 @@ class User(Entry):
 
 class Group(Entry):
     """A group"""
-    # pylint: disable=too-few-public-methods
 
     def __repr__(self):
         # Call __repr__ explicitly to bypass weakproxy
@@ -156,7 +152,6 @@ class WritableGroup(WritableEntry, Group):
 
 class Config(ABC):
     """A user database configuration"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
         self.options = kwargs
@@ -306,7 +301,6 @@ class SyncId(uuid.UUID):
 
 class SyncIds(Iterable):
     """A list of synchronization identifiers"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, iterable):
         self.iterable = iterable
@@ -320,19 +314,16 @@ class SyncIds(Iterable):
 
 class UnchangedSyncIds(SyncIds):
     """A list of synchronization identifiers for unchanged database entries"""
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class DeletedSyncIds(SyncIds):
     """A list of synchronization identifiers for deleted database entries"""
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class RefreshComplete(object):
     """An indication that the refresh stage of synchronization is complete"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, autodelete=False):
         self.autodelete = autodelete

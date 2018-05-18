@@ -12,7 +12,7 @@ except AttributeError:
 
 class SyncInfoMessage(object):
     """A syncInfoMessage intermediate message"""
-    # pylint: disable=too-few-public-methods, no-member
+    # pylint: disable=no-member
 
     responseName = ldap.syncrepl.SyncInfoMessage.responseName
 

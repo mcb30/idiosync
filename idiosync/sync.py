@@ -123,7 +123,6 @@ class GroupSynchronizer(EntrySynchronizer):
 
 class DatabaseSynchronizer(object):
     """A user database synchronizer"""
-    # pylint: disable=too-few-public-methods
 
     UserSynchronizer = UserSynchronizer
     GroupSynchronizer = GroupSynchronizer

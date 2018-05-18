@@ -17,7 +17,6 @@ Base = declarative_base()
 
 class OrmPrincipal(Base):
     """An RT security principal"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'Principals'
 
@@ -32,7 +31,6 @@ class OrmPrincipal(Base):
 
 class OrmUser(Base):
     """An RT user"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'Users'
 
@@ -55,7 +53,6 @@ class OrmUser(Base):
 
 class OrmGroup(Base):
     """An RT group"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'Groups'
 
@@ -75,7 +72,6 @@ class OrmGroup(Base):
 
 class OrmMember(Base):
     """An RT group membership"""
-    # pylint: disable=too-few-public-methods
 
     __tablename__ = 'GroupMembers'
 
@@ -110,7 +106,6 @@ class RequestTrackerEntry(SqlEntry):
 
 class RequestTrackerUser(SqlUser, RequestTrackerEntry):
     """An RT user"""
-    # pylint: disable=too-many-ancestors
 
     model = SqlModel(OrmUser, 'Name', syncid='IdiosyncId', member='groups')
     displayName = SqlAttribute('RealName')
@@ -122,7 +117,6 @@ class RequestTrackerUser(SqlUser, RequestTrackerEntry):
 
 class RequestTrackerGroup(SqlGroup, RequestTrackerEntry):
     """An RT group"""
-    # pylint: disable=too-many-ancestors
 
     model = SqlModel(OrmGroup, 'Name', syncid='IdiosyncId', member='users')
     commonName = SqlAttribute('Name')
@@ -131,13 +125,11 @@ class RequestTrackerGroup(SqlGroup, RequestTrackerEntry):
 
 class RequestTrackerConfig(SqlConfig):
     """RT user database configuration"""
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class RequestTrackerDatabase(SqlDatabase):
     """An RT user database"""
-    # pylint: disable=too-few-public-methods
 
     Config = RequestTrackerConfig
     User = RequestTrackerUser

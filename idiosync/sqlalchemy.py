@@ -119,7 +119,6 @@ class UuidChar(TypeDecorator):
 
 class SqlModel(object):
     """A SQLAlchemy model"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, orm, key, syncid=None, member=None):
         self.orm = orm
@@ -130,7 +129,6 @@ class SqlModel(object):
 
 class SqlAttribute(Attribute):
     """A SQL user database attribute"""
-    # pylint: disable=too-few-public-methods
 
     def __get__(self, instance, owner):
         """Get attribute value"""
@@ -266,7 +264,6 @@ class SqlGroup(SqlEntry, WritableGroup):
 
 class SqlConfig(Config):
     """SQL user database configuration"""
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, uri, **kwargs):
         super(SqlConfig, self).__init__(**kwargs)
