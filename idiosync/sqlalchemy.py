@@ -121,10 +121,11 @@ class SqlModel(object):
     """A SQLAlchemy model"""
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, orm, key, syncid=None):
+    def __init__(self, orm, key, syncid=None, member=None):
         self.orm = orm
         self.key = key
         self.syncid = syncid
+        self.member = member
 
 
 class SqlAttribute(Attribute):
@@ -242,14 +243,20 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
 
 class SqlUser(SqlEntry, WritableUser):
     """A SQL user database user"""
-    # pylint: disable=abstract-method
-    pass
+
+    @property
+    def groups(self):
+        """Groups of which this user is a member"""
+        return (self.db.Group(x) for x in getattr(self.row, self.model.member))
 
 
 class SqlGroup(SqlEntry, WritableGroup):
     """A SQL user database group"""
-    # pylint: disable=abstract-method
-    pass
+
+    @property
+    def users(self):
+        """Users who are members of this group"""
+        return (self.db.User(x) for x in getattr(self.row, self.model.member))
 
 
 ##############################################################################

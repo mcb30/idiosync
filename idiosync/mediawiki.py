@@ -92,7 +92,7 @@ class MediaWikiUser(SqlUser):
     """A MediaWiki user"""
     # pylint: disable=too-many-ancestors
 
-    model = SqlModel(OrmUser, 'user_name', 'user_idiosyncid')
+    model = SqlModel(OrmUser, 'user_name', syncid='user_idiosyncid')
     uid = MediaWikiUidAttribute('user_name')
     displayName = SqlAttribute('user_real_name')
     mail = SqlAttribute('user_email')
