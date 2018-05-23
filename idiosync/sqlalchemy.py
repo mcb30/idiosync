@@ -4,8 +4,8 @@ from abc import ABCMeta
 import uuid
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.types import TypeDecorator, BINARY, String
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import TypeDecorator, BINARY, Integer, String
+from sqlalchemy.dialects import mysql, postgresql
 import alembic
 from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
                    Config, WritableDatabase)
@@ -41,6 +41,28 @@ class BinaryString(TypeDecorator):
         if value is None:
             return value
         return value.decode('utf-8')
+
+
+class UnsignedInteger(TypeDecorator):
+    """Unsigned integer column"""
+    # pylint: disable=abstract-method
+
+    impl = Integer
+    python_type = int
+
+    def load_dialect_impl(self, dialect):
+        """Get corresponding TypeEngine object"""
+        if dialect.name == 'mysql':
+            return dialect.type_descriptor(mysql.INTEGER(unsigned=True))
+        return dialect.type_descriptor(Integer)
+
+    def process_bind_param(self, value, dialect):
+        """Encode unsigned integer to raw column value"""
+        return value
+
+    def process_result_value(self, value, dialect):
+        """Decode raw column value to unsigned integer"""
+        return value
 
 
 class UuidBinary(TypeDecorator):

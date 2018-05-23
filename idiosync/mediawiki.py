@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from .sqlalchemy import (BinaryString, UuidChar, SqlModel, SqlAttribute,
-                         SqlUser, SqlConfig, SqlDatabase)
+from .sqlalchemy import (BinaryString, UnsignedInteger, UuidChar, SqlModel,
+                         SqlAttribute, SqlUser, SqlConfig, SqlDatabase)
 from .dummy import DummyGroup
 
 ##############################################################################
@@ -21,7 +21,7 @@ class OrmUser(Base):
 
     __tablename__ = 'user'
 
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(UnsignedInteger, primary_key=True)
     user_name = Column(BinaryString, nullable=False, unique=True)
     user_real_name = Column(BinaryString, nullable=False, default='')
     user_password = Column(BinaryString, nullable=False, default='')
