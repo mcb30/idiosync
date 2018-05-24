@@ -3,9 +3,11 @@
 from abc import ABCMeta
 import uuid
 from sqlalchemy import create_engine, inspect, and_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, contains_eager
 from sqlalchemy.types import TypeDecorator, BINARY, Integer, String
+from sqlalchemy.schema import MetaData
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.ext.associationproxy import ASSOCIATION_PROXY
 import alembic
 from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
                    Config, WritableDatabase)
@@ -221,6 +223,13 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
         """Query user database by synchronization identifier"""
         query = cls.db.query(cls.model.orm)
         attr = getattr(cls.model.orm, cls.model.syncid)
+        if attr.extension_type is ASSOCIATION_PROXY:
+            # Use inner join and a direct filter on the proxied column
+            # to improve query efficiency
+            query = query.join(attr.local_attr).options(
+                contains_eager(attr.local_attr)
+            )
+            attr = attr.remote_attr
         return query.filter(search(attr))
 
     @classmethod
@@ -253,11 +262,27 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
     def prepare(cls):
         # Create SyncId column if needed
         if cls.model.syncid is not None:
-            table = inspect(cls.model.orm).mapped_table
-            column = inspect(getattr(cls.model.orm, cls.model.syncid))
-            columns = inspect(cls.db.engine).get_columns(table.name)
-            if not any(x['name'] == column.name for x in columns):
-                cls.db.alembic.add_column(table.name, column.copy())
+            attr = getattr(cls.model.orm, cls.model.syncid)
+            if attr.extension_type is ASSOCIATION_PROXY:
+                # Create remote table
+                table = inspect(attr.target_class).mapped_table
+                if table.name not in inspect(cls.db.engine).get_table_names():
+                    op = alembic.operations.ops.CreateTableOp.from_table(table)
+                    cls.db.alembic.invoke(op)
+            else:
+                # Add column.  Use a temporary metadata in which the
+                # column gets disassociated from the table, to work
+                # around an apparent bug in either alembic or
+                # sqlalchemy that would otherwise result in an error
+                # "Column object 'c' already assigned to Table 't'".
+                table = inspect(cls.model.orm).mapped_table
+                table = table.tometadata(MetaData())
+                column = table.columns[attr.name]
+                columns = inspect(cls.db.engine).get_columns(table.name)
+                if not any(x['name'] == column.name for x in columns):
+                    op = alembic.operations.ops.AddColumnOp.from_column(column)
+                    column.table = None # Workaround; see above
+                    cls.db.alembic.invoke(op)
 
 
 class SqlUser(SqlEntry, WritableUser):
