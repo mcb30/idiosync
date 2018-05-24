@@ -265,24 +265,10 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
             attr = getattr(cls.model.orm, cls.model.syncid)
             if attr.extension_type is ASSOCIATION_PROXY:
                 # Create remote table
-                table = inspect(attr.target_class).mapped_table
-                if table.name not in inspect(cls.db.engine).get_table_names():
-                    op = alembic.operations.ops.CreateTableOp.from_table(table)
-                    cls.db.alembic.invoke(op)
+                cls.db.prepare_table(attr.target_class)
             else:
-                # Add column.  Use a temporary metadata in which the
-                # column gets disassociated from the table, to work
-                # around an apparent bug in either alembic or
-                # sqlalchemy that would otherwise result in an error
-                # "Column object 'c' already assigned to Table 't'".
-                table = inspect(cls.model.orm).mapped_table
-                table = table.tometadata(MetaData())
-                column = table.columns[attr.name]
-                columns = inspect(cls.db.engine).get_columns(table.name)
-                if not any(x['name'] == column.name for x in columns):
-                    op = alembic.operations.ops.AddColumnOp.from_column(column)
-                    column.table = None # Workaround; see above
-                    cls.db.alembic.invoke(op)
+                # Create column
+                cls.db.prepare_column(attr)
 
 
 class SqlUser(SqlEntry, WritableUser):
@@ -359,3 +345,24 @@ class SqlDatabase(WritableDatabase):
             ctx = alembic.migration.MigrationContext.configure(conn)
             self._alembic = alembic.operations.Operations(ctx)
         return self._alembic
+
+    def prepare_table(self, orm):
+        """Prepare table for use as part of an idiosync user database"""
+        table = inspect(orm).mapped_table
+        if table.name not in inspect(self.engine).get_table_names():
+            op = alembic.operations.ops.CreateTableOp.from_table(table)
+            self.alembic.invoke(op)
+
+    def prepare_column(self, column):
+        """Prepare column for use as part of an idiosync user database"""
+        # Use a temporary metadata in which the column is first
+        # disassociated from the table, to work around an apparent bug
+        # in alembic (or sqlalchemy) that would otherwise result in an
+        # error "Column object 'c' already assigned to Table 't'".
+        table = column.parent.mapped_table.tometadata(MetaData())
+        column = table.columns[column.name]
+        columns = inspect(self.engine).get_columns(table.name)
+        if not any(x['name'] == column.name for x in columns):
+            op = alembic.operations.ops.AddColumnOp.from_column(column)
+            column.table = None # Workaround; see above
+            self.alembic.invoke(op)
