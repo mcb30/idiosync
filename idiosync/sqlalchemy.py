@@ -10,7 +10,7 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.associationproxy import ASSOCIATION_PROXY
 import alembic
 from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
-                   Config, WritableDatabase)
+                   Config, State, WritableDatabase)
 
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
 
@@ -292,6 +292,75 @@ class SqlGroup(SqlEntry, WritableGroup):
 
 ##############################################################################
 #
+# User database synchronization state
+
+
+class SqlStateModel(object):
+    """A SQLAlchemy synchronization state model"""
+
+    def __init__(self, orm, key, value):
+        self.orm = orm
+        self.key = key
+        self.value = value
+
+
+class SqlState(State):
+    """SQL user database synchronization state"""
+
+    model = None
+    """SQLAlchemy synchronization state model"""
+
+    def __init__(self, db):
+        super(SqlState, self).__init__(db)
+        self.rows = {}
+
+    def query(self, key):
+        """Query database for synchronization state"""
+        attr = getattr(self.model.orm, self.model.key)
+        return self.db.query(self.model.orm).filter(attr == key)
+
+    def __getitem__(self, key):
+        if key in self.rows:
+            row = self.rows[key]
+        else:
+            row = self.rows[key] = self.query(key).one_or_none()
+        if row is None:
+            raise KeyError
+        return getattr(row, self.model.value)
+
+    def __setitem__(self, key, value):
+        if key in self.rows:
+            row = self.rows[key]
+        else:
+            row = self.rows[key] = self.query(key).one_or_none()
+        if row is None:
+            row = self.rows[key] = self.model.orm(**{self.model.key: key})
+            self.db.session.add(row)
+        current = getattr(row, self.model.value)
+        if value != current:
+            setattr(row, self.model.value, value)
+
+    def __delitem__(self, key):
+        if key in self.rows:
+            self.db.session.delete(self.rows[key])
+            del self.rows[key]
+        else:
+            self.query(key).delete()
+
+    def __iter__(self):
+        return (x[0] for x in
+                self.db.query(getattr(self.model.orm, self.model.key)))
+
+    def __len__(self):
+        return self.db.query(self.model.orm).count()
+
+    def prepare(self):
+        """Prepare for use as part of an idiosync user database"""
+        self.db.prepare_table(self.model.orm)
+
+
+##############################################################################
+#
 # User database
 
 
@@ -309,6 +378,7 @@ class SqlDatabase(WritableDatabase):
     Config = SqlConfig
     User = SqlUser
     Group = SqlGroup
+    State = SqlState
 
     def __init__(self, **kwargs):
         super(SqlDatabase, self).__init__(**kwargs)

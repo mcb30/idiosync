@@ -1,7 +1,8 @@
 """Dummy user database"""
 
+from collections import UserDict
 import uuid
-from .base import WritableGroup
+from .base import WritableGroup, State
 
 NAMESPACE_DUMMY = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
 
@@ -64,3 +65,11 @@ class DummyGroup(WritableGroup):
     def delete(self):
         """Delete user database entry"""
         pass
+
+
+class DummyState(State, UserDict):
+    """Dummy synchronization state"""
+
+    def __init__(self, db):
+        super(DummyState, self).__init__(db)
+        self.data = {}

@@ -1,12 +1,13 @@
 """MediaWiki user database"""
 
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.associationproxy import association_proxy
 from .sqlalchemy import (BinaryString, UnsignedInteger, UuidChar, SqlModel,
-                         SqlAttribute, SqlUser, SqlConfig, SqlDatabase)
+                         SqlAttribute, SqlUser, SqlStateModel, SqlState,
+                         SqlConfig, SqlDatabase)
 from .dummy import DummyGroup
 
 ##############################################################################
@@ -83,6 +84,16 @@ class OrmIpBlock(Base):
     ipb_range_end = Column(BinaryString, nullable=False, default='')
 
     user = relationship('OrmUser', back_populates='ipblocks')
+
+
+class OrmIdiosyncState(Base):
+    """MediaWiki synchronization state"""
+
+    __tablename__ = 'idiosync_state'
+
+    ids_id = Column(Integer, primary_key=True)
+    ids_key = Column(String(SqlState.KEY_LEN), nullable=False, unique=True)
+    ids_value = Column(Text)
 
 
 ##############################################################################
@@ -173,6 +184,12 @@ class MediaWikiGroup(DummyGroup):
         return (self.db.User(x) for x in query)
 
 
+class MediaWikiState(SqlState):
+    """MediaWiki user database synchronization state"""
+
+    model = SqlStateModel(OrmIdiosyncState, 'ids_key', 'ids_value')
+
+
 class MediaWikiConfig(SqlConfig):
     """MediaWiki user database configuration"""
 
@@ -187,6 +204,7 @@ class MediaWikiDatabase(SqlDatabase):
     Config = MediaWikiConfig
     User = MediaWikiUser
     Group = MediaWikiGroup
+    State = MediaWikiState
 
     @property
     def groups(self):

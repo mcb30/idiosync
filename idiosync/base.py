@@ -1,7 +1,7 @@
 """User database"""
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableMapping
 import itertools
 import uuid
 import weakref
@@ -147,6 +147,26 @@ class WritableGroup(WritableEntry, Group):
 
 ##############################################################################
 #
+# User database synchronization state
+
+
+class State(MutableMapping):
+    """User database synchronization state"""
+    # pylint: disable=abstract-method
+
+    KEY_LEN = 128
+    """Maximum state key length"""
+
+    def __init__(self, db):
+        self.db = db
+
+    def prepare(self):
+        """Prepare for use as part of an idiosync user database"""
+        pass
+
+
+##############################################################################
+#
 # User database
 
 
@@ -229,6 +249,16 @@ class WatchableDatabase(Database):
 class WritableDatabase(Database):
     """A writable user database"""
 
+    def __init__(self, **kwargs):
+        super(WritableDatabase, self).__init__(**kwargs)
+        self.state = self.State(weakref.proxy(self))
+
+    @property
+    @abstractmethod
+    def State(self):
+        """State class for this database"""
+        pass
+
     def find_syncids(self, syncids, invert=False):
         """Look up user database entries by synchronization identifier"""
         return itertools.chain(
@@ -240,6 +270,11 @@ class WritableDatabase(Database):
     def commit(self):
         """Commit database changes"""
         pass
+
+    def prepare(self):
+        """Prepare for use as an idiosync user database"""
+        super(WritableDatabase, self).prepare()
+        self.state.prepare()
 
 
 ##############################################################################

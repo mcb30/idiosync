@@ -1,11 +1,12 @@
 """Request Tracker (RT) user database"""
 
-from sqlalchemy import Column, Enum, ForeignKey, Integer, String
+from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from .sqlalchemy import (UuidChar, SqlModel, SqlAttribute, SqlEntry, SqlUser,
-                         SqlGroup, SqlConfig, SqlDatabase)
+                         SqlGroup, SqlStateModel, SqlState, SqlConfig,
+                         SqlDatabase)
 
 ##############################################################################
 #
@@ -87,6 +88,16 @@ class OrmMember(Base):
                          lazy='joined')
 
 
+class OrmIdiosyncState(Base):
+    """RT synchronization state"""
+
+    __tablename__ = 'IdiosyncState'
+
+    id = Column(Integer, primary_key=True)
+    Key = Column(String(SqlState.KEY_LEN), nullable=False, unique=True)
+    Value = Column(Text)
+
+
 ##############################################################################
 #
 # User database model
@@ -125,6 +136,12 @@ class RequestTrackerGroup(SqlGroup, RequestTrackerEntry):
     description = SqlAttribute('Description')
 
 
+class RequestTrackerState(SqlState):
+    """RT user database synchronization state"""
+
+    model = SqlStateModel(OrmIdiosyncState, 'Key', 'Value')
+
+
 class RequestTrackerConfig(SqlConfig):
     """RT user database configuration"""
     pass
@@ -136,3 +153,4 @@ class RequestTrackerDatabase(SqlDatabase):
     Config = RequestTrackerConfig
     User = RequestTrackerUser
     Group = RequestTrackerGroup
+    State = RequestTrackerState
