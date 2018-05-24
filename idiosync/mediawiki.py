@@ -33,7 +33,8 @@ class OrmUser(Base):
                                  uselist=False, lazy='joined',
                                  cascade='all, delete-orphan',
                                  passive_deletes=True)
-    user_groups = relationship('OrmUserGroup', back_populates='user')
+    user_groups = relationship('OrmUserGroup', back_populates='user',
+                               cascade='all, delete-orphan')
     ipblocks = relationship('OrmIpBlock', back_populates='user',
                             lazy='joined', cascade='all, delete-orphan')
 
