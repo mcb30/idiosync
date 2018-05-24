@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.associationproxy import association_proxy
 from .sqlalchemy import (BinaryString, UnsignedInteger, UuidChar, SqlModel,
                          SqlAttribute, SqlUser, SqlConfig, SqlDatabase)
 from .dummy import DummyGroup
@@ -27,11 +28,31 @@ class OrmUser(Base):
     user_password = Column(BinaryString, nullable=False, default='')
     user_newpassword = Column(BinaryString, nullable=False, default='')
     user_email = Column(BinaryString, nullable=False, default='')
-    user_idiosyncid = Column(UuidChar, unique=True)
 
+    idiosync_user = relationship('OrmIdiosyncUser', back_populates='user',
+                                 uselist=False, lazy='joined',
+                                 cascade='all, delete-orphan',
+                                 passive_deletes=True)
     user_groups = relationship('OrmUserGroup', back_populates='user')
     ipblocks = relationship('OrmIpBlock', back_populates='user',
                             lazy='joined', cascade='all, delete-orphan')
+
+    user_idiosyncid = association_proxy(
+        'idiosync_user', 'idu_syncid',
+        creator=lambda syncid: OrmIdiosyncUser(idu_syncid=syncid)
+    )
+
+
+class OrmIdiosyncUser(Base):
+    """A MediaWiki user synchronization identifier"""
+
+    __tablename__ = 'idiosync_user'
+
+    idu_user = Column(ForeignKey('user.user_id', onupdate='CASCADE',
+                                 ondelete='CASCADE'), primary_key=True)
+    idu_syncid = Column(UuidChar, nullable=False, unique=True)
+
+    user = relationship('OrmUser', back_populates='idiosync_user')
 
 
 class OrmUserGroup(Base):
