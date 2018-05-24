@@ -2,7 +2,7 @@
 
 from abc import ABCMeta
 import uuid
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, and_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator, BINARY, Integer, String
 from sqlalchemy.dialects import mysql, postgresql
@@ -209,21 +209,34 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
         setattr(self.row, self.model.syncid, value)
 
     @classmethod
-    def find_query(cls, search):
-        """Search for user database entry"""
-        row = cls.db.query(cls.model.orm).filter(search).one_or_none()
+    def find(cls, key):
+        """Look up user database entry"""
+        query = cls.db.query(cls.model.orm)
+        attr = getattr(cls.model.orm, cls.model.key)
+        row = query.filter(attr == key).one_or_none()
         return cls(row) if row is not None else None
 
     @classmethod
-    def find(cls, key):
-        """Look up user database entry"""
-        attr = getattr(cls.model.orm, cls.model.key)
-        return cls.find_query(attr == key)
+    def query_syncid(cls, search):
+        """Query user database by synchronization identifier"""
+        query = cls.db.query(cls.model.orm)
+        attr = getattr(cls.model.orm, cls.model.syncid)
+        return query.filter(search(attr))
 
     @classmethod
     def find_syncid(cls, syncid):
-        attr = getattr(cls.model.orm, cls.model.syncid)
-        return cls.find_query(attr == syncid)
+        """Look up user database entry by synchronization identifier"""
+        row = cls.query_syncid(lambda attr: attr == syncid).one_or_none()
+        return cls(row) if row is not None else None
+
+    @classmethod
+    def find_syncids(cls, syncids, invert=False):
+        """Look up user database entries by synchronization identifier"""
+        query = cls.query_syncid(lambda attr: and_(
+            attr.isnot(None),
+            ~attr.in_(syncids) if invert else attr.in_(syncids),
+        ))
+        return (cls(row) for row in query)
 
     @classmethod
     def create(cls):
@@ -232,23 +245,9 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
         cls.db.session.add(row)
         return cls(row)
 
-    @classmethod
-    def delete(cls, syncids):
-        """Delete all of the specified entries"""
-        attr = getattr(cls.model.orm, cls.model.syncid)
-        cls.db.session.flush()
-        cls.db.query(cls.model.orm).filter(
-            attr.isnot(None), attr.in_(syncids)
-        ).delete(synchronize_session=False)
-
-    @classmethod
-    def prune(cls, syncids):
-        """Delete all synchronized entries except the specified entries"""
-        attr = getattr(cls.model.orm, cls.model.syncid)
-        cls.db.session.flush()
-        cls.db.query(cls.model.orm).filter(
-            attr.isnot(None), ~attr.in_(syncids)
-        ).delete(synchronize_session=False)
+    def delete(self):
+        """Delete user database entry"""
+        self.db.session.delete(self.row)
 
     @classmethod
     def prepare(cls):

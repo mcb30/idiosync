@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+import itertools
 import uuid
 import weakref
 
@@ -110,6 +111,12 @@ class WritableEntry(Entry):
         pass
 
     @classmethod
+    @abstractmethod
+    def find_syncids(cls, syncids, invert=False):
+        """Look up user database entries by synchronization identifier"""
+        pass
+
+    @classmethod
     def find_match(cls, entry):
         """Look up closest matching user database entry"""
         return cls.find(entry.key)
@@ -120,16 +127,9 @@ class WritableEntry(Entry):
         """Create new user database entry"""
         pass
 
-    @classmethod
     @abstractmethod
-    def delete(cls, syncids):
-        """Delete all of the specified entries"""
-        pass
-
-    @classmethod
-    @abstractmethod
-    def prune(cls, syncids):
-        """Delete all synchronized entries except the specified entries"""
+    def delete(self):
+        """Delete user database entry"""
         pass
 
 
@@ -229,15 +229,12 @@ class WatchableDatabase(Database):
 class WritableDatabase(Database):
     """A writable user database"""
 
-    def delete(self, syncids):
-        """Delete all of the specified entries"""
-        self.User.delete(syncids)
-        self.Group.delete(syncids)
-
-    def prune(self, syncids):
-        """Delete all synchronized entries except the specified entries"""
-        self.User.prune(syncids)
-        self.Group.prune(syncids)
+    def find_syncids(self, syncids, invert=False):
+        """Look up user database entries by synchronization identifier"""
+        return itertools.chain(
+            self.User.find_syncids(syncids, invert=invert),
+            self.Group.find_syncids(syncids, invert=invert)
+        )
 
     @abstractmethod
     def commit(self):

@@ -52,16 +52,15 @@ class DummyGroup(WritableGroup):
         return None
 
     @classmethod
+    def find_syncids(cls, syncids, invert=False):
+        """Look up user database entries by synchronization identifier"""
+        return ()
+
+    @classmethod
     def create(cls):
         """Create new user database entry"""
         return cls(None)
 
-    @classmethod
-    def delete(cls, syncids):
-        """Delete all of the specified entries"""
-        pass
-
-    @classmethod
-    def prune(cls, syncids):
-        """Delete all synchronized entries except the specified entries"""
+    def delete(self):
+        """Delete user database entry"""
         pass

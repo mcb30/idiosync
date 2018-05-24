@@ -136,9 +136,49 @@ class DatabaseSynchronizer(object):
     def __repr__(self):
         return "%s(%r,%r)" % (self.__class__.__name__, self.src, self.dst)
 
-    def sync(self, oneshot=False, strict=False):
+    def entry(self, src, syncids=None, strict=False):
+        """Synchronize a single database entry"""
+
+        # Construct synchronization identifier
+        syncid = SyncId(uuid=src.uuid)
+
+        # Add to list of observed synchronization identifiers
+        if syncids is not None:
+            syncids |= {syncid}
+
+        # Determine type of entry
+        if isinstance(src, User):
+            syncer = self.user
+            DstEntry = self.dst.User
+        else:
+            syncer = self.group
+            DstEntry = self.dst.Group
+
+        # Identify or create corresponding destination entry
+        dst = DstEntry.find_syncid(syncid)
+        if dst is None and not strict:
+            logger.info("guessing matching entry for %s", src)
+            dst = DstEntry.find_match(src)
+        if dst is None:
+            logger.info("creating new entry for %s", src)
+            dst = DstEntry.create()
+
+        # Synchronize entry
+        logger.info("synchronizing entry %s", src)
+        syncer.sync(src, dst)
+
+    def delete(self, syncids, invert=False, delete=False):
+        """Delete (or disable) multiple database entries"""
+        for dst in self.dst.find_syncids(syncids, invert=invert):
+            if delete:
+                logger.info("deleting entry %s", dst)
+                dst.delete()
+            elif dst.enabled:
+                logger.info("disabling entry %s", dst)
+                dst.enabled = False
+
+    def sync(self, oneshot=False, strict=False, delete=False):
         """Synchronize database"""
-        # pylint: disable=too-many-branches
 
         # Prepare destination database
         self.dst.prepare()
@@ -148,33 +188,8 @@ class DatabaseSynchronizer(object):
         for src in self.src.watch(oneshot=oneshot):
             if isinstance(src, Entry):
 
-                # Construct synchronization identifier
-                syncid = SyncId(uuid=src.uuid)
-
-                # Add to list of observed synchronization identifiers
-                if syncids is not None:
-                    syncids |= {syncid}
-
-                # Determine type of entry
-                if isinstance(src, User):
-                    syncer = self.user
-                    DstEntry = self.dst.User
-                else:
-                    syncer = self.group
-                    DstEntry = self.dst.Group
-
-                # Identify or create corresponding destination entry
-                dst = DstEntry.find_syncid(syncid)
-                if dst is None and not strict:
-                    logger.info("guessing matching entry for %s", src)
-                    dst = DstEntry.find_match(src)
-                if dst is None:
-                    logger.info("creating new entry for %s", src)
-                    dst = DstEntry.create()
-
                 # Synchronize entry
-                logger.info("synchronizing entry %s", src)
-                syncer.sync(src, dst)
+                self.entry(src, syncids=syncids, strict=strict)
 
                 # Commit changes unless this is part of a bulk refresh
                 if not syncids:
@@ -189,14 +204,14 @@ class DatabaseSynchronizer(object):
             elif isinstance(src, DeletedSyncIds):
 
                 # Delete synchronization identifiers
-                self.dst.delete(src)
+                self.delete(src, invert=False, delete=delete)
 
             elif isinstance(src, RefreshComplete):
 
                 # Delete unmentioned synchronization identifiers if applicable
                 if syncids is not None and src.autodelete:
                     logger.info("deleting unmentioned entries")
-                    self.dst.prune(SyncIds(syncids))
+                    self.delete(SyncIds(syncids), invert=True, delete=delete)
 
                 # Clear list of synchronization identifiers
                 syncids = None
