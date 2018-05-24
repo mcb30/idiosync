@@ -260,6 +260,7 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
 
     @classmethod
     def prepare(cls):
+        """Prepare for use as part of an idiosync user database"""
         # Create SyncId column if needed
         if cls.model.syncid is not None:
             attr = getattr(cls.model.orm, cls.model.syncid)
