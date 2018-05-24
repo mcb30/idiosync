@@ -4,7 +4,7 @@ from abc import ABCMeta
 import uuid
 from sqlalchemy import create_engine, inspect, and_
 from sqlalchemy.orm import sessionmaker, contains_eager
-from sqlalchemy.types import TypeDecorator, BINARY, Integer, String
+from sqlalchemy.types import TypeDecorator, BINARY, VARBINARY, Integer, String
 from sqlalchemy.schema import MetaData
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.associationproxy import ASSOCIATION_PROXY
@@ -29,7 +29,7 @@ class BinaryString(TypeDecorator):
     """
     # pylint: disable=abstract-method
 
-    impl = BINARY
+    impl = VARBINARY
     python_type = str
 
     def process_bind_param(self, value, dialect):
