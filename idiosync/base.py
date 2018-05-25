@@ -1,6 +1,7 @@
 """User database"""
 
 from abc import ABC, abstractmethod
+from collections import UserString
 from collections.abc import Iterable, MutableMapping
 import itertools
 import uuid
@@ -150,6 +151,13 @@ class WritableGroup(WritableEntry, Group):
 # User database synchronization state
 
 
+class SyncCookie(UserString):
+    """A synchronization cookie"""
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.data)
+
+
 class State(MutableMapping):
     """User database synchronization state"""
     # pylint: disable=abstract-method
@@ -157,12 +165,26 @@ class State(MutableMapping):
     KEY_LEN = 128
     """Maximum state key length"""
 
+    KEY_COOKIE = 'cookie'
+    """Synchronization cookie state key"""
+
     def __init__(self, db):
         self.db = db
 
     def prepare(self):
         """Prepare for use as part of an idiosync user database"""
         pass
+
+    @property
+    def cookie(self):
+        """Synchronization cookie"""
+        raw = self.get(self.KEY_COOKIE, None)
+        return SyncCookie(raw) if raw is not None else None
+
+    @cookie.setter
+    def cookie(self, value):
+        """Synchronization cookie"""
+        self[self.KEY_COOKIE] = str(value)
 
 
 ##############################################################################
