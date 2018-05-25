@@ -8,13 +8,6 @@ from .base import (Entry, User, SyncCookie, SyncId, SyncIds, UnchangedSyncIds,
 logger = logging.getLogger(__name__)
 
 
-class TooManyValuesError(TypeError):
-    """Attribute has too many values"""
-
-    def __str__(self):
-        return "Attribute '%s' has too many values" % self.args
-
-
 class AttributeSynchronizer(object):
     """A user database entry attribute synchronizer"""
 
@@ -43,10 +36,8 @@ class AttributeSynchronizer(object):
         """Synchronize multi-valued attribute to single-valued attribute"""
         srcval = getattr(src, self.name)
         dstval = getattr(dst, self.name)
-        if len(srcval) > 1:
-            raise TooManyValuesError(self.name)
-        if set((dstval,)) != set(srcval):
-            setattr(dst, self.name, list(srcval)[0])
+        if dstval not in srcval:
+            setattr(dst, self.name, next(iter(srcval), None))
 
     def sync_single_to_multi(self, src, dst):
         """Synchronize single-valued attribute to multi-valued attribute"""
