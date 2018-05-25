@@ -30,31 +30,19 @@ class OrmUser(Base):
     user_newpassword = Column(BinaryString, nullable=False, default='')
     user_email = Column(BinaryString, nullable=False, default='')
 
-    idiosync_user = relationship('OrmIdiosyncUser', back_populates='user',
-                                 uselist=False, lazy='joined',
-                                 cascade='all, delete-orphan',
-                                 passive_deletes=True)
     user_groups = relationship('OrmUserGroup', back_populates='user',
                                cascade='all, delete-orphan')
     ipblocks = relationship('OrmIpBlock', back_populates='user',
                             lazy='joined', cascade='all, delete-orphan')
 
+    idiosync_user = relationship('OrmIdiosyncUser', back_populates='user',
+                                 uselist=False, lazy='joined',
+                                 cascade='all, delete-orphan',
+                                 passive_deletes=True)
     user_idiosyncid = association_proxy(
         'idiosync_user', 'idu_syncid',
         creator=lambda syncid: OrmIdiosyncUser(idu_syncid=syncid)
     )
-
-
-class OrmIdiosyncUser(Base):
-    """A MediaWiki user synchronization identifier"""
-
-    __tablename__ = 'idiosync_user'
-
-    idu_user = Column(ForeignKey('user.user_id', onupdate='CASCADE',
-                                 ondelete='CASCADE'), primary_key=True)
-    idu_syncid = Column(UuidChar, nullable=False, unique=True)
-
-    user = relationship('OrmUser', back_populates='idiosync_user')
 
 
 class OrmUserGroup(Base):
@@ -84,6 +72,18 @@ class OrmIpBlock(Base):
     ipb_range_end = Column(BinaryString, nullable=False, default='')
 
     user = relationship('OrmUser', back_populates='ipblocks')
+
+
+class OrmIdiosyncUser(Base):
+    """A MediaWiki user synchronization identifier"""
+
+    __tablename__ = 'idiosync_user'
+
+    idu_user = Column(ForeignKey('user.user_id', onupdate='CASCADE',
+                                 ondelete='CASCADE'), primary_key=True)
+    idu_syncid = Column(UuidChar, nullable=False, unique=True)
+
+    user = relationship('OrmUser', back_populates='idiosync_user')
 
 
 class OrmIdiosyncState(Base):
