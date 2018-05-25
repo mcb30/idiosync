@@ -45,12 +45,20 @@ class OrmUser(Base):
     RealName = Column(String)
     WorkPhone = Column(String)
     MobilePhone = Column(String)
-    IdiosyncId = Column(UuidChar, unique=True)
 
     principal = relationship('OrmPrincipal', back_populates='user',
                              lazy='joined')
     memberships = relationship('OrmMember', back_populates='user')
     groups = association_proxy('memberships', 'group')
+
+    idiosync_user = relationship('OrmIdiosyncUser', back_populates='user',
+                                 uselist=False, lazy='joined',
+                                 cascade='all, delete-orphan',
+                                 passive_deletes=True)
+    IdiosyncId = association_proxy(
+        'idiosync_user', 'IdiosyncId',
+        creator=lambda syncid: OrmIdiosyncUser(IdiosyncId=syncid)
+    )
 
 
 class OrmGroup(Base):
@@ -65,12 +73,20 @@ class OrmGroup(Base):
     id = Column(ForeignKey('Principals.id'), primary_key=True)
     Name = Column(String, unique=True)
     Description = Column(String)
-    IdiosyncId = Column(UuidChar, unique=True)
 
     principal = relationship('OrmPrincipal', back_populates='group',
                              lazy='joined')
     memberships = relationship('OrmMember', back_populates='group')
     users = association_proxy('memberships', 'user')
+
+    idiosync_group = relationship('OrmIdiosyncGroup', back_populates='group',
+                                  uselist=False, lazy='joined',
+                                  cascade='all, delete-orphan',
+                                  passive_deletes=True)
+    IdiosyncId = association_proxy(
+        'idiosync_group', 'IdiosyncId',
+        creator=lambda syncid: OrmIdiosyncGroup(IdiosyncId=syncid)
+    )
 
 
 class OrmMember(Base):
@@ -86,6 +102,30 @@ class OrmMember(Base):
                         lazy='joined')
     group = relationship('OrmGroup', back_populates='memberships',
                          lazy='joined')
+
+
+class OrmIdiosyncUser(Base):
+    """An RT user synchronization identifier"""
+
+    __tablename__ = 'IdiosyncUser'
+
+    id = Column(ForeignKey('Users.id', onupdate='CASCADE', ondelete='CASCADE'),
+                primary_key=True)
+    IdiosyncId = Column(UuidChar, unique=True)
+
+    user = relationship('OrmUser', back_populates='idiosync_user')
+
+
+class OrmIdiosyncGroup(Base):
+    """An RT group synchronization identifier"""
+
+    __tablename__ = 'IdiosyncGroup'
+
+    id = Column(ForeignKey('Groups.id', onupdate='CASCADE', ondelete='CASCADE'),
+                primary_key=True)
+    IdiosyncId = Column(UuidChar, unique=True)
+
+    group = relationship('OrmGroup', back_populates='idiosync_group')
 
 
 class OrmIdiosyncState(Base):
