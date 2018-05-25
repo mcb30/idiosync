@@ -198,9 +198,9 @@ class LdapUser(LdapEntry, User):
     givenName = LdapStringAttribute('givenName')
     initials = LdapStringAttribute('initials')
     mail = LdapStringAttribute('mail', multi=True)
-    mobile = LdapStringAttribute('mobile')
+    mobile = LdapStringAttribute('mobile', multi=True)
     surname = LdapStringAttribute('sn')
-    telephoneNumber = LdapStringAttribute('telephoneNumber')
+    telephoneNumber = LdapStringAttribute('telephoneNumber', multi=True)
     title = LdapStringAttribute('title')
 
     name = commonName
