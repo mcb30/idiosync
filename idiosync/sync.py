@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 import logging
-from .base import (Entry, User, SyncId, SyncIds, UnchangedSyncIds,
+from .base import (Entry, User, SyncCookie, SyncId, SyncIds, UnchangedSyncIds,
                    DeletedSyncIds, RefreshComplete)
 
 logger = logging.getLogger(__name__)
@@ -185,7 +185,8 @@ class DatabaseSynchronizer(object):
 
         # Refresh database and watch for changes
         syncids = set()
-        for src in self.src.watch(oneshot=oneshot):
+        for src in self.src.watch(cookie=self.dst.state.cookie,
+                                  oneshot=oneshot):
             if isinstance(src, Entry):
 
                 # Synchronize entry
@@ -219,3 +220,16 @@ class DatabaseSynchronizer(object):
                 # Commit changes
                 logger.info("refresh complete")
                 self.dst.commit()
+
+            elif isinstance(src, SyncCookie):
+
+                # Update stored cookie
+                self.dst.state.cookie = src
+
+                # Commit changes unless this is part of a bulk refresh
+                if not syncids:
+                    self.dst.commit()
+
+            else:
+
+                raise TypeError(src)

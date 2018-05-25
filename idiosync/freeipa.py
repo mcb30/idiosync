@@ -43,10 +43,11 @@ class IpaDatabase(Rfc2307Database):
     User = IpaUser
     Group = IpaGroup
 
-    def watch(self, oneshot=False):
+    def watch(self, cookie=None, oneshot=False):
         """Watch for database changes"""
-        incremental = self.cookie is not None
-        for event in super(IpaDatabase, self).watch(oneshot=oneshot):
+        incremental = cookie is not None
+        for event in super(IpaDatabase, self).watch(cookie=cookie,
+                                                    oneshot=oneshot):
             if isinstance(event, RefreshComplete):
                 if oneshot and incremental:
                     # In refreshOnly mode with a request cookie,

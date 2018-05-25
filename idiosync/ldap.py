@@ -8,7 +8,8 @@ import ldap
 from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
                            SyncDoneControl)
 from .base import (Attribute, Entry, User, Group, Config, WatchableDatabase,
-                   SyncId, UnchangedSyncIds, DeletedSyncIds, RefreshComplete)
+                   SyncId, UnchangedSyncIds, DeletedSyncIds, RefreshComplete,
+                   SyncCookie)
 from .syncrepl import SyncInfoMessage
 
 logger = logging.getLogger(__name__)
@@ -256,8 +257,6 @@ class LdapDatabase(WatchableDatabase):
     User = LdapUser
     Group = LdapGroup
 
-    cookie = None
-
     def __init__(self, **kwargs):
         super(LdapDatabase, self).__init__(**kwargs)
         self.ldap = ldap.initialize(self.config.uri, **self.config.options)
@@ -341,9 +340,10 @@ class LdapDatabase(WatchableDatabase):
 
         # Update cookie if applicable
         if sync.cookie is not None:
-            self.cookie = sync.cookie
+            yield SyncCookie(sync.cookie)
 
-    def _watch_res_intermediate(self, sync):
+    @staticmethod
+    def _watch_res_intermediate(sync):
         """Process watch intermediate result"""
         cookie = None
         if sync.newcookie is not None:
@@ -390,9 +390,10 @@ class LdapDatabase(WatchableDatabase):
 
         # Update cookie if applicable
         if cookie is not None:
-            self.cookie = cookie
+            yield SyncCookie(cookie)
 
-    def _watch_res_search_result(self, sync):
+    @staticmethod
+    def _watch_res_search_result(sync):
         """Process watch search result"""
 
         # Parse result
@@ -404,14 +405,15 @@ class LdapDatabase(WatchableDatabase):
 
         # Update cookie if applicable
         if cookie is not None:
-            self.cookie = cookie
+            yield SyncCookie(cookie)
 
-    def watch(self, oneshot=False):
+    def watch(self, cookie=None, oneshot=False):
         """Watch for database changes"""
 
         # Issue request
         mode = 'refreshOnly' if oneshot else 'refreshAndPersist'
-        syncreq = SyncRequestControl(cookie=self.cookie, mode=mode)
+        cookie = str(cookie) if cookie is not None else None
+        syncreq = SyncRequestControl(cookie=cookie, mode=mode)
         search = '(|%s%s)' % (self.User.model.all, self.Group.model.all)
         logger.debug("Searching in %s mode for %s", mode, search)
         msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
