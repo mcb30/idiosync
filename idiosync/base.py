@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from collections import UserString
 from collections.abc import Iterable, MutableMapping
+import importlib
+import inspect
 import itertools
 import uuid
 import weakref
@@ -202,12 +204,36 @@ class Config(ABC):
 class Database(ABC):
     """A user database"""
 
+    plugins = {}
+    """Registered plugins"""
+
     def __init__(self, **kwargs):
         self.config = self.Config(**kwargs)
         # Construct User and Group classes attached to this database
         db = weakref.proxy(self)
         self.User = type(self.User.__name__, (self.User,), {'db': db})
         self.Group = type(self.Group.__name__, (self.Group,), {'db': db})
+
+    def __init_subclass__(cls, plugin=None, **kwargs):
+        super(Database, cls).__init_subclass__(**kwargs)
+        if plugin is None:
+            plugin = cls.__module__
+        if not inspect.isabstract(cls):
+            if plugin in cls.plugins:
+                raise ValueError("Duplicate plugin name '%s' for %s and %s" %
+                                 (plugin, cls.plugins[plugin], cls))
+            cls.plugins[plugin] = cls
+
+    @classmethod
+    def plugin(cls, plugin):
+        """Find database class by plugin name"""
+        if '.' not in plugin:
+            plugin = 'idiosync.%s' % plugin
+        if plugin not in cls.plugins:
+            importlib.import_module(plugin)
+        if plugin not in cls.plugins:
+            raise KeyError("Unknown plugin '%s'" % plugin)
+        return cls.plugins[plugin]
 
     @property
     @abstractmethod
@@ -297,6 +323,11 @@ class WritableDatabase(Database):
         """Prepare for use as an idiosync user database"""
         super(WritableDatabase, self).prepare()
         self.state.prepare()
+
+
+def database(plugin, **kwargs):
+    """Construct database by plugin name"""
+    return Database.plugin(plugin)(**kwargs)
 
 
 ##############################################################################
