@@ -224,3 +224,8 @@ class DatabaseSynchronizer(object):
             else:
 
                 raise TypeError(src)
+
+
+def synchronize(src, dst, **kwargs):
+    """Synchronize source database to destination database"""
+    DatabaseSynchronizer(src, dst).sync(**kwargs)
