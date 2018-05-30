@@ -407,11 +407,11 @@ class LdapDatabase(WatchableDatabase):
         if cookie is not None:
             yield SyncCookie(cookie)
 
-    def watch(self, cookie=None, oneshot=False):
+    def watch(self, cookie=None, persist=True):
         """Watch for database changes"""
 
         # Issue request
-        mode = 'refreshOnly' if oneshot else 'refreshAndPersist'
+        mode = 'refreshAndPersist' if persist else 'refreshOnly'
         cookie = str(cookie) if cookie is not None else None
         syncreq = SyncRequestControl(cookie=cookie, mode=mode)
         search = '(|%s%s)' % (self.User.model.all, self.Group.model.all)

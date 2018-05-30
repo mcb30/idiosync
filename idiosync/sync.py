@@ -168,7 +168,7 @@ class DatabaseSynchronizer(object):
                 logger.info("disabling entry %s", dst)
                 dst.enabled = False
 
-    def sync(self, oneshot=False, strict=False, delete=False):
+    def sync(self, persist=True, strict=False, delete=False):
         """Synchronize database"""
 
         # Prepare destination database
@@ -177,7 +177,7 @@ class DatabaseSynchronizer(object):
         # Refresh database and watch for changes
         syncids = set()
         for src in self.src.watch(cookie=self.dst.state.cookie,
-                                  oneshot=oneshot):
+                                  persist=persist):
             if isinstance(src, Entry):
 
                 # Synchronize entry

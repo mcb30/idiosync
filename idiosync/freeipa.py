@@ -43,13 +43,13 @@ class IpaDatabase(Rfc2307Database):
     User = IpaUser
     Group = IpaGroup
 
-    def watch(self, cookie=None, oneshot=False):
+    def watch(self, cookie=None, persist=True):
         """Watch for database changes"""
         incremental = cookie is not None
         for event in super(IpaDatabase, self).watch(cookie=cookie,
-                                                    oneshot=oneshot):
+                                                    persist=persist):
             if isinstance(event, RefreshComplete):
-                if oneshot and incremental:
+                if incremental and not persist:
                     # In refreshOnly mode with a request cookie,
                     # 389-ds-base will send any modified or deleted
                     # entries followed by a syncDoneControl with
@@ -63,7 +63,7 @@ class IpaDatabase(Rfc2307Database):
                     #
                     logger.warning("Assuming refreshDeletes=True intended")
                     event.autodelete = False
-                elif not oneshot and not incremental:
+                elif persist and not incremental:
                     # In refreshAndPersist mode with no request
                     # cookie, 389-ds-base will send all existing
                     # entries followed by a syncInfoMessage of
