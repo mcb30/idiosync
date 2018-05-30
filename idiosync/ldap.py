@@ -27,8 +27,7 @@ class LdapAttributeDict(dict):
 
     def __init__(self, raw):
         # Force all keys to lower case
-        super(LdapAttributeDict, self).__init__({k.lower(): v
-                                                 for k, v in raw.items()})
+        super().__init__({k.lower(): v for k, v in raw.items()})
 
 
 ##############################################################################
@@ -166,7 +165,7 @@ class LdapEntry(Entry):
     """LDAP model"""
 
     def __init__(self, dn, attrs):
-        super(LdapEntry, self).__init__()
+        super().__init__()
         self.dn = dn
         self.attrs = (attrs if isinstance(attrs, LdapAttributeDict)
                       else LdapAttributeDict(attrs))
@@ -240,7 +239,7 @@ class LdapConfig(Config):
     def __init__(self, uri=None, domain='', base=None, sasl_mech='GSSAPI',
                  username=None, password=None, **kwargs):
         # pylint: disable=too-many-arguments
-        super(LdapConfig, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.uri = uri
         self.domain = domain
         self.base = (base if base is not None else
@@ -258,7 +257,7 @@ class LdapDatabase(WatchableDatabase):
     Group = LdapGroup
 
     def __init__(self, **kwargs):
-        super(LdapDatabase, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.ldap = ldap.initialize(self.config.uri, **self.config.options)
         self.bind()
 

@@ -37,7 +37,7 @@ class OrmUser(Base):
 
     def __init__(self, *args, **kwargs):
         principal = OrmPrincipal(PrincipalType='User')
-        super(OrmUser, self).__init__(*args, principal=principal, **kwargs)
+        super().__init__(*args, principal=principal, **kwargs)
 
     id = Column(ForeignKey('Principals.id'), primary_key=True)
     Name = Column(String, nullable=False, unique=True)
@@ -68,7 +68,7 @@ class OrmGroup(Base):
 
     def __init__(self, *args, **kwargs):
         principal = OrmPrincipal(PrincipalType='Group')
-        super(OrmGroup, self).__init__(*args, principal=principal, **kwargs)
+        super().__init__(*args, principal=principal, **kwargs)
 
     id = Column(ForeignKey('Principals.id'), primary_key=True)
     Name = Column(String, unique=True)

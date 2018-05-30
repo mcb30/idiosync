@@ -215,7 +215,7 @@ class Database(ABC):
         self.Group = type(self.Group.__name__, (self.Group,), {'db': db})
 
     def __init_subclass__(cls, plugin=None, **kwargs):
-        super(Database, cls).__init_subclass__(**kwargs)
+        super().__init_subclass__(**kwargs)
         if plugin is None:
             plugin = cls.__module__
         if not inspect.isabstract(cls):
@@ -298,7 +298,7 @@ class WritableDatabase(Database):
     """A writable user database"""
 
     def __init__(self, **kwargs):
-        super(WritableDatabase, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.state = self.State(weakref.proxy(self))
 
     @property
@@ -321,7 +321,7 @@ class WritableDatabase(Database):
 
     def prepare(self):
         """Prepare for use as an idiosync user database"""
-        super(WritableDatabase, self).prepare()
+        super().prepare()
         self.state.prepare()
 
 
@@ -379,9 +379,9 @@ class SyncId(uuid.UUID):
     def __init__(self, *args, uuid=None, **kwargs):
         # pylint: disable=redefined-outer-name
         if uuid is not None:
-            super(SyncId, self).__init__(*args, bytes=uuid.bytes, **kwargs)
+            super().__init__(*args, bytes=uuid.bytes, **kwargs)
         else:
-            super(SyncId, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
 
 class SyncIds(Iterable):

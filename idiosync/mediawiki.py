@@ -108,13 +108,13 @@ class MediaWikiUidAttribute(SqlAttribute):
         """Get user name"""
         if instance is None:
             return self
-        name = super(MediaWikiUidAttribute, self).__get__(instance, owner)
+        name = super().__get__(instance, owner)
         return instance.format_uid(name)
 
     def __set__(self, instance, value):
         """Set user name"""
         name = instance.parse_uid(value)
-        super(MediaWikiUidAttribute, self).__set__(instance, name)
+        super().__set__(instance, name)
 
 
 class MediaWikiUser(SqlUser):
@@ -194,7 +194,7 @@ class MediaWikiConfig(SqlConfig):
     """MediaWiki user database configuration"""
 
     def __init__(self, title_case=True, **kwargs):
-        super(MediaWikiConfig, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.title_case = title_case
 
 

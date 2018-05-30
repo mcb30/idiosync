@@ -71,5 +71,5 @@ class DummyState(State, UserDict):
     """Dummy synchronization state"""
 
     def __init__(self, db):
-        super(DummyState, self).__init__(db)
+        super().__init__(db)
         self.data = {}

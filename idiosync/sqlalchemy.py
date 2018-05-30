@@ -169,7 +169,7 @@ class SqlEntryMeta(ABCMeta):
     """SQL user database entry metaclass"""
 
     def __init__(cls, name, bases, dct):
-        super(SqlEntryMeta, cls).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
         # Construct a namespace based on the table name if applicable
         if cls.model is not None:
             table = inspect(cls.model.orm).mapped_table
@@ -186,7 +186,7 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
     """UUID namespace for entries within this table"""
 
     def __init__(self, row):
-        super(SqlEntry, self).__init__()
+        super().__init__()
         self.row = row
 
     @property
@@ -311,7 +311,7 @@ class SqlState(State):
     """SQLAlchemy synchronization state model"""
 
     def __init__(self, db):
-        super(SqlState, self).__init__(db)
+        super().__init__(db)
         self.rows = {}
 
     def query(self, key):
@@ -368,7 +368,7 @@ class SqlConfig(Config):
     """SQL user database configuration"""
 
     def __init__(self, uri, **kwargs):
-        super(SqlConfig, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.uri = uri
 
 
@@ -381,7 +381,7 @@ class SqlDatabase(WritableDatabase):
     State = SqlState
 
     def __init__(self, **kwargs):
-        super(SqlDatabase, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.engine = create_engine(self.config.uri, **self.config.options)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
