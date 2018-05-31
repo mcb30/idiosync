@@ -1,6 +1,7 @@
 """SQLAlchemy user database"""
 
 from abc import ABCMeta
+import logging
 import uuid
 from sqlalchemy import create_engine, inspect, and_
 from sqlalchemy.orm import sessionmaker, contains_eager
@@ -13,6 +14,9 @@ from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
                    Config, State, WritableDatabase)
 
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
+
+logger = logging.getLogger(__name__)
+
 
 ##############################################################################
 #
@@ -382,7 +386,9 @@ class SqlDatabase(WritableDatabase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.engine = create_engine(self.config.uri, **self.config.options)
+        echo = (logger.getEffectiveLevel() < logging.DEBUG)
+        self.engine = create_engine(self.config.uri, echo=echo,
+                                    **self.config.options)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
         self._alembic = None
