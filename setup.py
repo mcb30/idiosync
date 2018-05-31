@@ -21,6 +21,13 @@ setup(
         "Topic :: System :: Systems Administration :: Authentication/Directory",
     ],
     packages=find_packages(),
+    install_requires=[
+        'alembic',
+        'ldap',
+        'pyasn1',
+        'sqlalchemy',
+        'yaml',
+    ],
     entry_points={
         'console_scripts': [
             'idiosync=idiosync.cli:SynchronizeCommand.main',
