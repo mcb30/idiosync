@@ -36,6 +36,11 @@ class Command(ABC):
         """Execute command"""
         pass
 
+    @classmethod
+    def main(cls):
+        """Execute command (as main entry point)"""
+        cls().execute()
+
 
 class SynchronizeCommand(Command):
     """Synchronize user database"""
