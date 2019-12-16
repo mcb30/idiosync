@@ -5,11 +5,6 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="idiosync",
-    description="Synchronize user databases",
-    author="Michael Brown",
-    author_email="mbrown@fensystems.co.uk",
-    license="GPLv2+",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
