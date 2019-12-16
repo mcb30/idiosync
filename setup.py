@@ -23,10 +23,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         'alembic',
-        'ldap',
         'pyasn1',
+        'python-ldap',
+        'pyyaml',
         'sqlalchemy',
-        'yaml',
     ],
     entry_points={
         'console_scripts': [
