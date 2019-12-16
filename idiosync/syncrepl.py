@@ -45,6 +45,8 @@ class SyncInfoMessage(object):
                 uuid = UUID(bytes=bytes(ids.getComponentByPosition(i)))
                 uuids.append(str(uuid))
             val['syncUUIDs'] = uuids
-            val['refreshDeletes'] = bool(comp.getComponentByName('refreshDeletes'))
+            val['refreshDeletes'] = bool(
+                comp.getComponentByName('refreshDeletes')
+            )
 
         setattr(self, attr, val)

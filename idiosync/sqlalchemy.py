@@ -441,5 +441,5 @@ class SqlDatabase(WritableDatabase):
         columns = inspect(self.engine).get_columns(table.name)
         if not any(x['name'] == column.name for x in columns):
             op = alembic.operations.ops.AddColumnOp.from_column(column)
-            column.table = None # Workaround; see above
+            column.table = None  # Workaround; see above
             self.alembic.invoke(op)

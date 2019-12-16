@@ -121,7 +121,8 @@ class OrmIdiosyncGroup(Base):
 
     __tablename__ = 'IdiosyncGroup'
 
-    id = Column(ForeignKey('Groups.id', onupdate='CASCADE', ondelete='CASCADE'),
+    id = Column(ForeignKey('Groups.id', onupdate='CASCADE',
+                           ondelete='CASCADE'),
                 primary_key=True)
     IdiosyncId = Column(UuidChar, unique=True)
 

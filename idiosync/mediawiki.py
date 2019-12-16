@@ -153,7 +153,9 @@ class MediaWikiUser(SqlUser):
         if not cls.db.config.title_case:
             return name
         if not name[0].islower():
-            raise ValueError("User name must begin with a lower-case character")
+            raise ValueError(
+                "User name must begin with a lower-case character"
+            )
         return name[0].upper() + name[1:]
 
     @classmethod
