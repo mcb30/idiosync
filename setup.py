@@ -20,7 +20,7 @@ setup(
         "Topic :: Security",
         "Topic :: System :: Systems Administration :: Authentication/Directory",
     ],
-    packages=find_packages(),
+    packages=find_packages(exclude=['test']),
     install_requires=[
         'alembic',
         'pyasn1',

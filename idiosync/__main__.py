@@ -2,4 +2,5 @@
 
 from .cli import SynchronizeCommand
 
-SynchronizeCommand.main()
+if __name__ == '__main__':
+    SynchronizeCommand.main()
