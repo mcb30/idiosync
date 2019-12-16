@@ -1,5 +1,7 @@
 """User database"""
 
+# pylint: disable=abstract-method
+
 from abc import ABC, abstractmethod
 from collections import UserString
 from collections.abc import Iterable, MutableMapping
@@ -51,7 +53,6 @@ class Entry(ABC):
     @abstractmethod
     def uuid(self):
         """Permanent identifier for this entry"""
-        pass
 
     @property
     def enabled(self):
@@ -62,12 +63,10 @@ class Entry(ABC):
     @abstractmethod
     def find(cls, key):
         """Look up user database entry"""
-        pass
 
     @classmethod
     def prepare(cls):
         """Prepare for use as part of an idiosync user database"""
-        pass
 
 
 class User(Entry):
@@ -81,7 +80,6 @@ class User(Entry):
     @abstractmethod
     def groups(self):
         """Groups of which this user is a member"""
-        pass
 
 
 class Group(Entry):
@@ -95,7 +93,6 @@ class Group(Entry):
     @abstractmethod
     def users(self):
         """Users who are members of this group"""
-        pass
 
 
 class WritableEntry(Entry):
@@ -105,19 +102,16 @@ class WritableEntry(Entry):
     @abstractmethod
     def syncid(self):
         """Synchronization identifier"""
-        pass
 
     @classmethod
     @abstractmethod
     def find_syncid(cls, syncid):
         """Look up user database entry by synchronization identifier"""
-        pass
 
     @classmethod
     @abstractmethod
     def find_syncids(cls, syncids, invert=False):
         """Look up user database entries by synchronization identifier"""
-        pass
 
     @classmethod
     def find_match(cls, entry):
@@ -128,24 +122,18 @@ class WritableEntry(Entry):
     @abstractmethod
     def create(cls):
         """Create new user database entry"""
-        pass
 
     @abstractmethod
     def delete(self):
         """Delete user database entry"""
-        pass
 
 
 class WritableUser(WritableEntry, User):
     """A writable user"""
-    # pylint: disable=abstract-method
-    pass
 
 
 class WritableGroup(WritableEntry, Group):
     """A writable group"""
-    # pylint: disable=abstract-method
-    pass
 
 
 ##############################################################################
@@ -162,7 +150,6 @@ class SyncCookie(UserString):
 
 class State(MutableMapping):
     """User database synchronization state"""
-    # pylint: disable=abstract-method
 
     KEY_LEN = 128
     """Maximum state key length"""
@@ -175,7 +162,6 @@ class State(MutableMapping):
 
     def prepare(self):
         """Prepare for use as part of an idiosync user database"""
-        pass
 
     @property
     def cookie(self):
@@ -239,13 +225,11 @@ class Database(ABC):
     @abstractmethod
     def Config(self):
         """Configuration class for this database"""
-        pass
 
     @property
     @abstractmethod
     def User(self):
         """User class for this database"""
-        pass
 
     @property
     @abstractmethod
@@ -271,13 +255,11 @@ class Database(ABC):
     @abstractmethod
     def users(self):
         """All users"""
-        pass
 
     @property
     @abstractmethod
     def groups(self):
         """All groups"""
-        pass
 
     def prepare(self):
         """Prepare for use as an idiosync user database"""
@@ -291,7 +273,6 @@ class WatchableDatabase(Database):
     @abstractmethod
     def watch(self, cookie=None, persist=True):
         """Watch for database changes"""
-        pass
 
 
 class WritableDatabase(Database):
@@ -305,7 +286,6 @@ class WritableDatabase(Database):
     @abstractmethod
     def State(self):
         """State class for this database"""
-        pass
 
     def find_syncids(self, syncids, invert=False):
         """Look up user database entries by synchronization identifier"""
@@ -317,7 +297,6 @@ class WritableDatabase(Database):
     @abstractmethod
     def commit(self):
         """Commit database changes"""
-        pass
 
     def prepare(self):
         """Prepare for use as an idiosync user database"""
@@ -399,15 +378,13 @@ class SyncIds(Iterable):
 
 class UnchangedSyncIds(SyncIds):
     """A list of synchronization identifiers for unchanged database entries"""
-    pass
 
 
 class DeletedSyncIds(SyncIds):
     """A list of synchronization identifiers for deleted database entries"""
-    pass
 
 
-class RefreshComplete(object):
+class RefreshComplete:
     """An indication that the refresh stage of synchronization is complete"""
 
     def __init__(self, autodelete=False):

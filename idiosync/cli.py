@@ -34,7 +34,6 @@ class Command(ABC):
     @abstractmethod
     def execute(self):
         """Execute command"""
-        pass
 
     @classmethod
     def main(cls):

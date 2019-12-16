@@ -145,7 +145,7 @@ class UuidChar(TypeDecorator):
 # User database entries
 
 
-class SqlModel(object):
+class SqlModel:
     """A SQLAlchemy model"""
 
     def __init__(self, orm, key, syncid=None, member=None):
@@ -299,7 +299,7 @@ class SqlGroup(SqlEntry, WritableGroup):
 # User database synchronization state
 
 
-class SqlStateModel(object):
+class SqlStateModel:
     """A SQLAlchemy synchronization state model"""
 
     def __init__(self, orm, key, value):

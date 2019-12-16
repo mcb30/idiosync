@@ -33,7 +33,6 @@ class IpaGroup(Rfc2307Group):
 
 class IpaConfig(Rfc2307Config):
     """A FreeIPA user database configuration"""
-    pass
 
 
 class IpaDatabase(Rfc2307Database):

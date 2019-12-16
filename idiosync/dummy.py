@@ -40,7 +40,6 @@ class DummyGroup(WritableGroup):
     @syncid.setter
     def syncid(self, value):
         """Set synchronization identifier"""
-        pass
 
     @classmethod
     def find(cls, key):
@@ -64,7 +63,6 @@ class DummyGroup(WritableGroup):
 
     def delete(self):
         """Delete user database entry"""
-        pass
 
 
 class DummyState(State, UserDict):

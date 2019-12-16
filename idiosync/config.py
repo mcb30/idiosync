@@ -20,7 +20,6 @@ class Config(ABC):
     @abstractmethod
     def parse(cls, config):
         """Parse configuration"""
-        pass
 
     @classmethod
     def load(cls, filename):

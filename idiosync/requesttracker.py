@@ -185,7 +185,6 @@ class RequestTrackerState(SqlState):
 
 class RequestTrackerConfig(SqlConfig):
     """RT user database configuration"""
-    pass
 
 
 class RequestTrackerDatabase(SqlDatabase):

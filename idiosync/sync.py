@@ -8,7 +8,7 @@ from .base import (Entry, User, SyncCookie, SyncId, SyncIds, UnchangedSyncIds,
 logger = logging.getLogger(__name__)
 
 
-class AttributeSynchronizer(object):
+class AttributeSynchronizer:
     """A user database entry attribute synchronizer"""
 
     def __init__(self, name, Src, Dst):
@@ -79,7 +79,6 @@ class EntrySynchronizer(ABC):
     @abstractmethod
     def attrs(self):
         """Attribute list"""
-        pass
 
     def sync(self, src, dst):
         """Synchronize entries"""
@@ -112,7 +111,7 @@ class GroupSynchronizer(EntrySynchronizer):
     attrs = ['commonName', 'description']
 
 
-class DatabaseSynchronizer(object):
+class DatabaseSynchronizer:
     """A user database synchronizer"""
 
     UserSynchronizer = UserSynchronizer
