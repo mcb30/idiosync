@@ -6,6 +6,8 @@ import os
 from setuptools import setup, find_packages
 
 setup(
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
