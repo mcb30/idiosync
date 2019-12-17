@@ -2,6 +2,7 @@
 
 """Setup script"""
 
+import os
 from setuptools import setup, find_packages
 
 setup(
@@ -20,13 +21,14 @@ setup(
     setup_requires=[
         'setuptools_scm',
     ],
-    install_requires=[
+    install_requires=([
         'alembic',
         'pyasn1',
-        'python-ldap',
         'pyyaml',
         'sqlalchemy',
-    ],
+    ] + ([] if os.getenv('READTHEDOCS') else [
+        'python-ldap',
+    ])),
     entry_points={
         'console_scripts': [
             'idiosync=idiosync.cli:SynchronizeCommand.main',

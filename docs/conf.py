@@ -32,3 +32,5 @@ html_theme_options = {
     'github_repo': project,
     'github_button': True,
 }
+
+autodoc_mock_imports = ['ldap']
