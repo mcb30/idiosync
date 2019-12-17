@@ -16,6 +16,10 @@ setup(
         "Topic :: System :: Systems Administration :: Authentication/Directory",
     ],
     packages=find_packages(exclude=['test']),
+    use_scm_version=True,
+    setup_requires=[
+        'setuptools_scm',
+    ],
     install_requires=[
         'alembic',
         'pyasn1',
