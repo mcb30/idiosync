@@ -227,7 +227,8 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
         """Query user database by synchronization identifier"""
         query = cls.db.query(cls.model.orm)
         attr = getattr(cls.model.orm, cls.model.syncid)
-        if attr.extension_type is ASSOCIATION_PROXY:
+        desc = inspect(cls.model.orm).all_orm_descriptors[cls.model.syncid]
+        if desc.extension_type is ASSOCIATION_PROXY:
             # Use inner join and a direct filter on the proxied column
             # to improve query efficiency
             query = query.join(attr.local_attr).options(
@@ -268,7 +269,8 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
         # Create SyncId column if needed
         if cls.model.syncid is not None:
             attr = getattr(cls.model.orm, cls.model.syncid)
-            if attr.extension_type is ASSOCIATION_PROXY:
+            desc = inspect(cls.model.orm).all_orm_descriptors[cls.model.syncid]
+            if desc.extension_type is ASSOCIATION_PROXY:
                 # Create remote table
                 cls.db.prepare_table(attr.target_class)
             else:
