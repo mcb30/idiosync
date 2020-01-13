@@ -1,0 +1,3 @@
+plugin: freeipa
+uri: ldaps://freeipa.example.org
+domain: example.org

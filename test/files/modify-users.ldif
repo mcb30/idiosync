@@ -1,0 +1,103 @@
+# result: 100
+#
+dn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+cn: ipausers
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MBUKAQEEEC7vtKo0ChHqrLrCmtEQNQk=
+description: Default group for all users
+ipaUniqueID: 2fbdbae2-340a-11ea-bb3c-22e777e37718
+member: uid=alice,cn=users,cn=accounts,dc=example,dc=org
+member: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+objectClass: top
+objectClass: groupofnames
+objectClass: nestedgroup
+objectClass: ipausergroup
+objectClass: ipaobject
+
+# result: 100
+#
+dn: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+cn: Bob Baker
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MBUKAQEEEAhMnA02CxHqrLrCmtEQNQk=
+displayName: Bob Baker
+gecos: Bob Baker
+gidNumber: 42000003
+givenName: Bob
+homeDirectory: /home/bob
+initials: BB
+ipaUniqueID: 0f094c96-360b-11ea-97c1-621af0790215
+krbCanonicalName: bob@EXAMPLE.ORG
+krbPrincipalName: bob@EXAMPLE.ORG
+loginShell: /bin/sh
+mail: bob@example.org
+memberOf: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+mepManagedEntry: cn=bob,cn=groups,cn=accounts,dc=example,dc=org
+objectClass: top
+objectClass: person
+objectClass: organizationalperson
+objectClass: inetorgperson
+objectClass: inetuser
+objectClass: posixaccount
+objectClass: krbprincipalaux
+objectClass: krbticketpolicyaux
+objectClass: ipaobject
+objectClass: ipasshuser
+objectClass: ipaSshGroupOfPubKeys
+objectClass: mepOriginEntry
+sn: Baker
+uid: bob
+uidNumber: 42000003
+
+# result: 121
+#
+dn: 
+control: 1.3.6.1.4.1.4203.1.9.1.4 false oYGZBIGWZnJlZWlwYS5leGFtcGxlLm9yZzoz
+ ODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGRjPWV4YW1wbGUsZGM9b3JnOmRjPWV
+ 4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcmdQZXJzb24pKG9iamVjdENsYXNzPW
+ lwYVVzZXJHcm91cCkpIzE2
+
+# result: 100
+#
+dn: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+cn: Bob Baker
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MIGuCgECBBAITJwNNgsR6qy6wprREDUJBIGW
+ ZnJlZWlwYS5leGFtcGxlLm9yZzozODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGR
+ jPWV4YW1wbGUsZGM9b3JnOmRjPWV4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcm
+ dQZXJzb24pKG9iamVjdENsYXNzPWlwYVVzZXJHcm91cCkpIzE3
+createTimestamp: 20200113134611Z
+creatorsName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+displayName: Bob Baker
+entrydn: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+entryid: 453
+entryusn: 1426
+gecos: Bob Baker
+gidNumber: 42000003
+givenName: Bobby
+homeDirectory: /home/bob
+initials: BB
+ipaUniqueID: 0f094c96-360b-11ea-97c1-621af0790215
+krbCanonicalName: bob@EXAMPLE.ORG
+krbPrincipalName: bob@EXAMPLE.ORG
+loginShell: /bin/sh
+mail: bob@example.org
+memberOf: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+mepManagedEntry: cn=bob,cn=groups,cn=accounts,dc=example,dc=org
+modifiersName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+modifyTimestamp: 20200113134613Z
+nsUniqueId: 084c9c0d-360b11ea-acbac29a-d1103509
+objectClass: top
+objectClass: person
+objectClass: organizationalperson
+objectClass: inetorgperson
+objectClass: inetuser
+objectClass: posixaccount
+objectClass: krbprincipalaux
+objectClass: krbticketpolicyaux
+objectClass: ipaobject
+objectClass: ipasshuser
+objectClass: ipaSshGroupOfPubKeys
+objectClass: mepOriginEntry
+parentid: 3
+sn: Baker
+uid: bob
+uidNumber: 42000003
+

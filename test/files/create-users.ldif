@@ -1,0 +1,275 @@
+# result: 100
+#
+dn: cn=admins,cn=groups,cn=accounts,dc=example,dc=org
+cn: admins
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MBUKAQEEEC7vtKk0ChHqrLrCmtEQNQk=
+createTimestamp: 20200111003454Z
+creatorsName: cn=Directory Manager
+description: Account administrators group
+entrydn: cn=admins,cn=groups,cn=accounts,dc=example,dc=org
+entryid: 40
+entryusn: 904
+gidNumber: 42000000
+ipaUniqueID: 2fbb9f46-340a-11ea-b639-22e777e37718
+member: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+memberOf: cn=Replication Administrators,cn=privileges,cn=pbac,dc=example,dc=
+ org
+memberOf: cn=Add Replication Agreements,cn=permissions,cn=pbac,dc=example,dc
+ =org
+memberOf: cn=Modify Replication Agreements,cn=permissions,cn=pbac,dc=example
+ ,dc=org
+memberOf: cn=Read Replication Agreements,cn=permissions,cn=pbac,dc=example,d
+ c=org
+memberOf: cn=Remove Replication Agreements,cn=permissions,cn=pbac,dc=example
+ ,dc=org
+memberOf: cn=Modify DNA Range,cn=permissions,cn=pbac,dc=example,dc=org
+memberOf: cn=Read PassSync Managers Configuration,cn=permissions,cn=pbac,dc=
+ example,dc=org
+memberOf: cn=Modify PassSync Managers Configuration,cn=permissions,cn=pbac,d
+ c=example,dc=org
+memberOf: cn=Read LDBM Database Configuration,cn=permissions,cn=pbac,dc=exam
+ ple,dc=org
+memberOf: cn=Add Configuration Sub-Entries,cn=permissions,cn=pbac,dc=example
+ ,dc=org
+memberOf: cn=Read DNA Range,cn=permissions,cn=pbac,dc=example,dc=org
+memberOf: cn=Host Enrollment,cn=privileges,cn=pbac,dc=example,dc=org
+memberOf: cn=System: Add krbPrincipalName to a Host,cn=permissions,cn=pbac,d
+ c=example,dc=org
+memberOf: cn=System: Enroll a Host,cn=permissions,cn=pbac,dc=example,dc=org
+memberOf: cn=System: Manage Host Certificates,cn=permissions,cn=pbac,dc=exam
+ ple,dc=org
+memberOf: cn=System: Manage Host Enrollment Password,cn=permissions,cn=pbac,
+ dc=example,dc=org
+memberOf: cn=System: Manage Host Keytab,cn=permissions,cn=pbac,dc=example,dc
+ =org
+memberOf: cn=System: Manage Host Principals,cn=permissions,cn=pbac,dc=exampl
+ e,dc=org
+modifiersName: cn=MemberOf Plugin,cn=plugins,cn=config
+modifyTimestamp: 20200111003919Z
+nsAccountLock: FALSE
+nsUniqueId: 2eefb4a9-340a11ea-acbac29a-d1103509
+objectClass: top
+objectClass: groupofnames
+objectClass: posixgroup
+objectClass: ipausergroup
+objectClass: ipaobject
+objectClass: nestedGroup
+parentid: 4
+
+# result: 100
+#
+dn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+cn: ipausers
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MBUKAQEEEC7vtKo0ChHqrLrCmtEQNQk=
+createTimestamp: 20200111003454Z
+creatorsName: cn=Directory Manager
+description: Default group for all users
+entrydn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+entryid: 41
+entryusn: 40
+ipaUniqueID: 2fbdbae2-340a-11ea-bb3c-22e777e37718
+modifiersName: cn=Directory Manager
+modifyTimestamp: 20200111003454Z
+nsUniqueId: 2eefb4aa-340a11ea-acbac29a-d1103509
+objectClass: top
+objectClass: groupofnames
+objectClass: nestedgroup
+objectClass: ipausergroup
+objectClass: ipaobject
+parentid: 4
+
+# result: 100
+#
+dn: cn=editors,cn=groups,cn=accounts,dc=example,dc=org
+cn: editors
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MBUKAQEEEC7vtKs0ChHqrLrCmtEQNQk=
+createTimestamp: 20200111003454Z
+creatorsName: cn=Directory Manager
+description: Limited admins who can edit other users
+entrydn: cn=editors,cn=groups,cn=accounts,dc=example,dc=org
+entryid: 42
+entryusn: 41
+gidNumber: 42000002
+ipaUniqueID: 2fbe0998-340a-11ea-b64c-22e777e37718
+modifiersName: cn=Directory Manager
+modifyTimestamp: 20200111003454Z
+nsUniqueId: 2eefb4ab-340a11ea-acbac29a-d1103509
+objectClass: top
+objectClass: groupofnames
+objectClass: posixgroup
+objectClass: ipausergroup
+objectClass: ipaobject
+objectClass: nestedGroup
+parentid: 4
+
+# result: 100
+#
+dn: cn=trust admins,cn=groups,cn=accounts,dc=example,dc=org
+cn: trust admins
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MBUKAQEEEMIo6lk0ChHqrLrCmtEQNQk=
+createTimestamp: 20200111003914Z
+creatorsName: cn=Directory Manager
+description: Trusts administrators group
+entrydn: cn=trust admins,cn=groups,cn=accounts,dc=example,dc=org
+entryid: 222
+entryusn: 600
+ipaUniqueID: cae5a732-340a-11ea-8c45-22e777e37718
+member: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+modifiersName: cn=Directory Manager
+modifyTimestamp: 20200111003914Z
+nsAccountLock: FALSE
+nsUniqueId: c228ea59-340a11ea-acbac29a-d1103509
+objectClass: top
+objectClass: groupofnames
+objectClass: ipausergroup
+objectClass: nestedgroup
+objectClass: ipaobject
+parentid: 4
+
+# result: 121
+#
+dn: 
+control: 1.3.6.1.4.1.4203.1.9.1.4 false oYGYBIGVZnJlZWlwYS5leGFtcGxlLm9yZzoz
+ ODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGRjPWV4YW1wbGUsZGM9b3JnOmRjPWV
+ 4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcmdQZXJzb24pKG9iamVjdENsYXNzPW
+ lwYVVzZXJHcm91cCkpIzI=
+
+# result: 100
+#
+dn: uid=alice,cn=users,cn=accounts,dc=example,dc=org
+cn: Alice Archer
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MIGtCgEBBBAITJwENgsR6qy6wprREDUJBIGV
+ ZnJlZWlwYS5leGFtcGxlLm9yZzozODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGR
+ jPWV4YW1wbGUsZGM9b3JnOmRjPWV4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcm
+ dQZXJzb24pKG9iamVjdENsYXNzPWlwYVVzZXJHcm91cCkpIzc=
+createTimestamp: 20200113134610Z
+creatorsName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+displayName: Alice Archer
+entrydn: uid=alice,cn=users,cn=accounts,dc=example,dc=org
+entryid: 451
+entryusn: 1400
+gecos: Alice Archer
+gidNumber: 42000001
+givenName: Alice
+homeDirectory: /home/alice
+initials: AA
+ipaUniqueID: 0e4e6b24-360b-11ea-885c-621af0790215
+krbCanonicalName: alice@EXAMPLE.ORG
+krbPrincipalName: alice@EXAMPLE.ORG
+loginShell: /bin/sh
+mail: alice@example.org
+modifiersName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+modifyTimestamp: 20200113134610Z
+nsUniqueId: 084c9c04-360b11ea-acbac29a-d1103509
+objectClass: top
+objectClass: person
+objectClass: organizationalperson
+objectClass: inetorgperson
+objectClass: inetuser
+objectClass: posixaccount
+objectClass: krbprincipalaux
+objectClass: krbticketpolicyaux
+objectClass: ipaobject
+objectClass: ipasshuser
+objectClass: ipaSshGroupOfPubKeys
+parentid: 3
+sn: Archer
+uid: alice
+uidNumber: 42000001
+
+# result: 100
+#
+dn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+cn: ipausers
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MIGtCgECBBAu77SqNAoR6qy6wprREDUJBIGV
+ ZnJlZWlwYS5leGFtcGxlLm9yZzozODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGR
+ jPWV4YW1wbGUsZGM9b3JnOmRjPWV4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcm
+ dQZXJzb24pKG9iamVjdENsYXNzPWlwYVVzZXJHcm91cCkpIzg=
+createTimestamp: 20200111003454Z
+creatorsName: cn=Directory Manager
+description: Default group for all users
+entrydn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+entryid: 41
+entryusn: 1408
+ipaUniqueID: 2fbdbae2-340a-11ea-bb3c-22e777e37718
+member: uid=alice,cn=users,cn=accounts,dc=example,dc=org
+modifiersName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+modifyTimestamp: 20200113134610Z
+nsUniqueId: 2eefb4aa-340a11ea-acbac29a-d1103509
+objectClass: top
+objectClass: groupofnames
+objectClass: nestedgroup
+objectClass: ipausergroup
+objectClass: ipaobject
+parentid: 4
+
+# result: 100
+#
+dn: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+cn: Bob Baker
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MIGuCgEBBBAITJwNNgsR6qy6wprREDUJBIGW
+ ZnJlZWlwYS5leGFtcGxlLm9yZzozODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGR
+ jPWV4YW1wbGUsZGM9b3JnOmRjPWV4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcm
+ dQZXJzb24pKG9iamVjdENsYXNzPWlwYVVzZXJHcm91cCkpIzE0
+createTimestamp: 20200113134611Z
+creatorsName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+displayName: Bob Baker
+entrydn: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+entryid: 453
+entryusn: 1414
+gecos: Bob Baker
+gidNumber: 42000003
+givenName: Bob
+homeDirectory: /home/bob
+initials: BB
+ipaUniqueID: 0f094c96-360b-11ea-97c1-621af0790215
+krbCanonicalName: bob@EXAMPLE.ORG
+krbPrincipalName: bob@EXAMPLE.ORG
+loginShell: /bin/sh
+mail: bob@example.org
+modifiersName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+modifyTimestamp: 20200113134611Z
+nsUniqueId: 084c9c0d-360b11ea-acbac29a-d1103509
+objectClass: top
+objectClass: person
+objectClass: organizationalperson
+objectClass: inetorgperson
+objectClass: inetuser
+objectClass: posixaccount
+objectClass: krbprincipalaux
+objectClass: krbticketpolicyaux
+objectClass: ipaobject
+objectClass: ipasshuser
+objectClass: ipaSshGroupOfPubKeys
+parentid: 3
+sn: Baker
+uid: bob
+uidNumber: 42000003
+
+# result: 100
+#
+dn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+cn: ipausers
+control: 1.3.6.1.4.1.4203.1.9.1.2 false MIGuCgECBBAu77SqNAoR6qy6wprREDUJBIGW
+ ZnJlZWlwYS5leGFtcGxlLm9yZzozODkjdWlkPWFkbWluLGNuPXVzZXJzLGNuPWFjY291bnRzLGR
+ jPWV4YW1wbGUsZGM9b3JnOmRjPWV4YW1wbGUsZGM9b3JnOih8KG9iamVjdENsYXNzPWluZXRPcm
+ dQZXJzb24pKG9iamVjdENsYXNzPWlwYVVzZXJHcm91cCkpIzE1
+createTimestamp: 20200111003454Z
+creatorsName: cn=Directory Manager
+description: Default group for all users
+entrydn: cn=ipausers,cn=groups,cn=accounts,dc=example,dc=org
+entryid: 41
+entryusn: 1422
+ipaUniqueID: 2fbdbae2-340a-11ea-bb3c-22e777e37718
+member: uid=alice,cn=users,cn=accounts,dc=example,dc=org
+member: uid=bob,cn=users,cn=accounts,dc=example,dc=org
+modifiersName: uid=admin,cn=users,cn=accounts,dc=example,dc=org
+modifyTimestamp: 20200113134611Z
+nsUniqueId: 2eefb4aa-340a11ea-acbac29a-d1103509
+objectClass: top
+objectClass: groupofnames
+objectClass: nestedgroup
+objectClass: ipausergroup
+objectClass: ipaobject
+parentid: 4
+
