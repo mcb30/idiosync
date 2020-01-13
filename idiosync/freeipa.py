@@ -42,10 +42,11 @@ class IpaDatabase(Rfc2307Database):
     User = IpaUser
     Group = IpaGroup
 
-    def watch(self, cookie=None, persist=True):
+    def watch(self, cookie=None, persist=True, trace=False):
         """Watch for database changes"""
         incremental = cookie is not None
-        for event in super().watch(cookie=cookie, persist=persist):
+        for event in super().watch(cookie=cookie, persist=persist,
+                                   trace=trace):
             if isinstance(event, RefreshComplete):
                 if incremental and not persist:
                     # In refreshOnly mode with a request cookie,

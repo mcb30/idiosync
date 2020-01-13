@@ -7,7 +7,9 @@ from collections import UserString
 from collections.abc import Iterable, MutableMapping
 import importlib
 import inspect
+import io
 import itertools
+import sys
 import uuid
 import weakref
 
@@ -177,6 +179,30 @@ class State(MutableMapping):
 
 ##############################################################################
 #
+# Tracing
+
+
+class TraceEvent:
+    """A database trace event"""
+
+    def __init__(self, data):
+        self.data = data
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.data)
+
+    def __str__(self):
+        with io.StringIO() as buf:
+            self.log(buf)
+            return buf.getvalue()
+
+    def log(self, fh):
+        """Log trace event to file"""
+        fh.write(str(self.data))
+
+
+##############################################################################
+#
 # User database
 
 
@@ -271,8 +297,28 @@ class WatchableDatabase(Database):
     """A watchable user database"""
 
     @abstractmethod
-    def watch(self, cookie=None, persist=True):
+    def watch(self, cookie=None, persist=True, trace=False):
         """Watch for database changes"""
+
+    def trace(self, fh=None, cookiefh=None, **kwargs):
+        """Log database changes to a trace file"""
+        if fh is None:
+            fh = sys.stdout
+        if cookiefh is None:
+            cookie = None
+        else:
+            cookiefh.seek(0)
+            cookie = cookiefh.read() or None
+        for entry in self.watch(cookie=cookie, trace=True, **kwargs):
+            if isinstance(entry, TraceEvent):
+                entry.log(fh)
+                fh.flush()
+            elif isinstance(entry, SyncCookie) and cookiefh is not None:
+                cookie = str(entry)
+                cookiefh.truncate(0)
+                cookiefh.seek(0)
+                cookiefh.write(cookie)
+                cookiefh.flush()
 
 
 class WritableDatabase(Database):

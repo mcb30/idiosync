@@ -34,6 +34,7 @@ setup(
     entry_points={
         'console_scripts': [
             'idiosync=idiosync.cli:SynchronizeCommand.main',
+            'idiotrace=idiosync.cli:TraceCommand.main',
         ],
     },
 )

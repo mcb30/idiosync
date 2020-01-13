@@ -1,15 +1,18 @@
 """LDAP user database"""
 
 from abc import abstractmethod
+from base64 import b64encode
 from collections import namedtuple
 import logging
 import uuid
 import ldap
+from ldap.controls import ResponseControl
 from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
                            SyncDoneControl)
+import ldif
 from .base import (Attribute, Entry, User, Group, Config, WatchableDatabase,
                    SyncId, UnchangedSyncIds, DeletedSyncIds, RefreshComplete,
-                   SyncCookie)
+                   SyncCookie, TraceEvent)
 from .syncrepl import SyncInfoMessage
 
 logger = logging.getLogger(__name__)
@@ -229,6 +232,62 @@ class LdapGroup(LdapEntry, Group):
 
 ##############################################################################
 #
+# LDAP tracing
+
+
+class LdapResponseControl(ldap.controls.ResponseControl):
+    """LDAP response server control with tracing support"""
+
+    def decodeControlValue(self, encodedControlValue):
+        """Decode the encoded control value"""
+        # pylint: disable=attribute-defined-outside-init
+        super().decodeControlValue(encodedControlValue)
+        self.encodedControlValue = encodedControlValue
+
+
+LdapResponseControls = {
+    k: type(v.__name__, (LdapResponseControl, v), {})
+    for k, v in ldap.controls.KNOWN_RESPONSE_CONTROLS.items()
+}
+
+
+class LdapTraceEvent(TraceEvent):
+    """LDAP trace event"""
+
+    @staticmethod
+    def control(ctrl):
+        """Stringify LDAP control"""
+        return '%s %s %s' % (
+            ctrl.controlType,
+            'true' if ctrl.criticality else 'false',
+            b64encode(ctrl.encodedControlValue).decode()
+        )
+
+    def log(self, fh):
+        writer = ldif.LDIFWriter(fh)
+        res = self.data
+        fh.write('# result: %d\n' % res.type)
+        fh.writelines(
+            '# control: %s\n' % self.control(ctrl)
+            for ctrl in res.ctrls
+        )
+        fh.write('#\n')
+        for dn, attrs, ctrls in res.data:
+            if res.type == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
+                ctrl = ResponseControl(dn)
+                ctrl.decodeControlValue(attrs)
+                dn = ''
+                record = {'control': [self.control(ctrl).encode()]}
+            else:
+                record = dict(attrs)
+            for ctrl in ctrls:
+                record.setdefault('control', [])
+                record['control'].append(self.control(ctrl).encode())
+            writer.unparse(dn, record)
+
+
+##############################################################################
+#
 # LDAP database
 
 
@@ -407,7 +466,7 @@ class LdapDatabase(WatchableDatabase):
         if cookie is not None:
             yield SyncCookie(cookie)
 
-    def watch(self, cookie=None, persist=True):
+    def watch(self, cookie=None, persist=True, trace=False):
         """Watch for database changes"""
 
         # Issue request
@@ -423,8 +482,12 @@ class LdapDatabase(WatchableDatabase):
 
         # Parse responses
         while True:
-            res = LdapResult(*self.ldap.result4(msgid, all=0, add_ctrls=1,
-                                                add_intermediates=1))
+            res = LdapResult(*self.ldap.result4(
+                msgid, all=0, add_ctrls=1, add_intermediates=1,
+                resp_ctrl_classes=LdapResponseControls,
+            ))
+            if trace:
+                yield LdapTraceEvent(res)
             rtype = res.type
             if rtype == ldap.RES_SEARCH_ENTRY:  # pylint: disable=no-member
                 for dn, attrs, ctrls in res.data:

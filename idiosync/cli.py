@@ -2,8 +2,9 @@
 
 from abc import ABC, abstractmethod
 import argparse
+from contextlib import nullcontext
 import logging
-from .config import SynchronizerConfig
+from .config import Config, DatabaseConfig, SynchronizerConfig
 
 
 class Command(ABC):
@@ -41,14 +42,27 @@ class Command(ABC):
         cls().execute()
 
 
-class SynchronizeCommand(Command):
-    """Synchronize user database"""
+class ConfigCommand(Command):
+    """An executable command utilising a configuration file"""
+    # pylint: disable=abstract-method
 
-    Config = SynchronizerConfig
+    Config = Config
 
     def __init__(self, argv=None):
         super().__init__(argv)
         self.config = self.Config.load(self.args.config)
+
+    @classmethod
+    def parser(cls, **kwargs):
+        """Construct argument parser"""
+        parser = super().parser(**kwargs)
+        parser.add_argument('config', help="Configuration file")
+        return parser
+
+
+class WatchCommand(Command):
+    """An executable command for watching a database"""
+    # pylint: disable=abstract-method
 
     @classmethod
     def parser(cls, **kwargs):
@@ -63,6 +77,18 @@ class SynchronizeCommand(Command):
             '--no-persist', action='store_false', dest='persist',
             help="Refresh only",
         )
+        return parser
+
+
+class SynchronizeCommand(ConfigCommand, WatchCommand):
+    """Synchronize user database"""
+
+    Config = SynchronizerConfig
+
+    @classmethod
+    def parser(cls, **kwargs):
+        """Construct argument parser"""
+        parser = super().parser(**kwargs)
         strict = parser.add_mutually_exclusive_group()
         strict.add_argument(
             '--strict', action='store_true',
@@ -81,7 +107,6 @@ class SynchronizeCommand(Command):
             '--no-delete', action='store_false', dest='delete', default=False,
             help="Disable deleted entries (default)",
         )
-        parser.add_argument('config', help="Configuration file")
         return parser
 
     def execute(self):
@@ -89,3 +114,26 @@ class SynchronizeCommand(Command):
         self.config.synchronizer.sync(persist=self.args.persist,
                                       strict=self.args.strict,
                                       delete=self.args.delete)
+
+
+class TraceCommand(ConfigCommand, WatchCommand):
+    """Trace user database changes"""
+
+    Config = DatabaseConfig
+
+    @classmethod
+    def parser(cls, **kwargs):
+        """Construct argument parser"""
+        parser = super().parser(**kwargs)
+        parser.add_argument('--output', '-o', help="Output file")
+        parser.add_argument('--cookie', '-c', help="Cookie file")
+        return parser
+
+    def execute(self):
+        """Execute command"""
+        with (open(self.args.output, 'wt') if self.args.output else
+              nullcontext()) as fh:
+            with (open(self.args.cookie, 'a+t') if self.args.cookie else
+                  nullcontext()) as cookiefh:
+                self.config.database.trace(fh=fh, cookiefh=cookiefh,
+                                           persist=self.args.persist)
