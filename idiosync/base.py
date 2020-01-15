@@ -106,9 +106,9 @@ class WritableEntry(Entry):
         """Synchronization identifier"""
 
     @classmethod
-    @abstractmethod
     def find_syncid(cls, syncid):
         """Look up user database entry by synchronization identifier"""
+        return next(cls.find_syncids({syncid}), None)
 
     @classmethod
     @abstractmethod
