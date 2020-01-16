@@ -358,6 +358,23 @@ class LdapDatabase(WatchableDatabase):
         return (self.Group(dn, attrs) for dn, attrs in
                 self.search(self.Group.model.all))
 
+    def _watch_search(self, cookie=None, persist=True):
+        """Get watch search results"""
+        mode = 'refreshAndPersist' if persist else 'refreshOnly'
+        cookie = str(cookie) if cookie is not None else None
+        syncreq = SyncRequestControl(cookie=cookie, mode=mode)
+        search = '(|%s%s)' % (self.User.model.all, self.Group.model.all)
+        logger.debug("Searching in %s mode for %s", mode, search)
+        msgid = self.ldap.search_ext(self.config.base,
+                                     # pylint: disable=no-member
+                                     ldap.SCOPE_SUBTREE, search, ['*', '+'],
+                                     serverctrls=[syncreq])
+        while True:
+            yield LdapResult(*self.ldap.result4(
+                msgid, all=0, add_ctrls=1, add_intermediates=1,
+                resp_ctrl_classes=LdapResponseControls,
+            ))
+
     def _watch_res_search_entry(self, dn, attrs, sync):
         """Process watch search entry"""
         user_objectClass = self.User.model.objectClass.lower()
@@ -468,24 +485,7 @@ class LdapDatabase(WatchableDatabase):
 
     def watch(self, cookie=None, persist=True, trace=False):
         """Watch for database changes"""
-
-        # Issue request
-        mode = 'refreshAndPersist' if persist else 'refreshOnly'
-        cookie = str(cookie) if cookie is not None else None
-        syncreq = SyncRequestControl(cookie=cookie, mode=mode)
-        search = '(|%s%s)' % (self.User.model.all, self.Group.model.all)
-        logger.debug("Searching in %s mode for %s", mode, search)
-        msgid = self.ldap.search_ext(self.config.base,
-                                     # pylint: disable=no-member
-                                     ldap.SCOPE_SUBTREE, search, ['*', '+'],
-                                     serverctrls=[syncreq])
-
-        # Parse responses
-        while True:
-            res = LdapResult(*self.ldap.result4(
-                msgid, all=0, add_ctrls=1, add_intermediates=1,
-                resp_ctrl_classes=LdapResponseControls,
-            ))
+        for res in self._watch_search(cookie=cookie, persist=persist):
             if trace:
                 yield LdapTraceEvent(res)
             rtype = res.type
