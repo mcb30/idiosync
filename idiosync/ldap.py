@@ -2,12 +2,13 @@
 
 from abc import abstractmethod
 from base64 import b64encode, b64decode
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+from dataclasses import dataclass, field
 import logging
 import re
+from typing import ClassVar, Dict, List, Tuple
 import uuid
 import ldap
-from ldap.controls import ResponseControl
 from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
                            SyncDoneControl)
 import ldif
@@ -17,21 +18,6 @@ from .base import (Attribute, Entry, User, Group, Config, WatchableDatabase,
 from .syncrepl import SyncInfoMessage
 
 logger = logging.getLogger(__name__)
-
-##############################################################################
-#
-# Base types
-
-LdapResult = namedtuple('LdapResult',
-                        ['type', 'data', 'msgid', 'ctrls', 'name', 'value'])
-
-
-class LdapAttributeDict(dict):
-    """An LDAP attribute dictionary"""
-
-    def __init__(self, raw):
-        # Force all keys to lower case
-        super().__init__({k.lower(): v for k, v in raw.items()})
 
 
 ##############################################################################
@@ -123,6 +109,81 @@ RESPONSE_CONTROLS = defaultdict(lambda: LdapResponseControl, {
     k: type(v.__name__, (LdapResponseControl, v), {})
     for k, v in ldap.controls.KNOWN_RESPONSE_CONTROLS.items()
 })
+
+
+##############################################################################
+#
+# LDAP search results
+
+
+LdapDataTuple = Tuple[str, Dict[str, List[bytes]], List[LdapResponseControl]]
+
+
+@dataclass
+class LdapResult(TraceEvent):
+    """LDAP search result"""
+
+    type: int = None
+    data: List[LdapDataTuple] = field(default_factory=list)
+    msgid: int = None
+    ctrls: List[LdapResponseControl] = field(default_factory=list)
+    name: str = None
+    value: bytes = None
+
+    RE: ClassVar = re.compile(
+        r'#\s+((result:\s+(?P<result>\d+))|(control:\s+(?P<control>.*)))'
+    )
+
+    def write(self, fh):
+        # Write result header comments
+        fh.write('# result: %d\n' % self.type)
+        fh.writelines('# control: %s\n' % ctrl for ctrl in self.ctrls)
+        fh.write('#\n')
+        # Write LDIF data
+        writer = ldif.LDIFWriter(fh)
+        for dn, attrs, ctrls in self.data:
+            if self.type == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
+                ctrl = LdapResponseControl(dn)
+                ctrl.decodeControlValue(attrs)
+                dn = ''
+                record = {'control': [ctrl.to_ldif().encode()]}
+            else:
+                record = dict(attrs)
+            for ctrl in ctrls:
+                record.setdefault('control', [])
+                record['control'].append(ctrl.to_ldif().encode())
+            writer.unparse(dn, record)
+
+    @classmethod
+    def read(cls, fh):
+        self = cls()
+        # Read result header comments
+        while True:
+            line = fh.readline()
+            m = cls.RE.fullmatch(line.rstrip())
+            if not m:
+                break
+            if m['result']:
+                self.type = int(m['result'])
+            elif m['control']:
+                ctrl = LdapResponseControl.from_ldif(m['control'])
+                self.ctrls.append(ctrl)
+        # Read LDIF data
+        parser = ldif.LDIFRecordList(fh)
+        parser.parse()
+        for dn, entry in parser.all_records:
+            ctrls = [LdapResponseControl.from_ldif(x.decode())
+                     for x in entry.pop('control', [])]
+            if self.type == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
+                ctrl = ctrls.pop(0)
+                dn = ctrl.controlType
+                entry = ctrl.encodedControlValue
+            self.data.append((dn, entry, ctrls))
+        return self
+
+    @staticmethod
+    def delimiter(line):
+        return line.startswith('# result:')
 
 
 ##############################################################################
@@ -222,6 +283,14 @@ class LdapModel:
         return '(&%s%s)' % (self.all, self.member(other))
 
 
+class LdapAttributeDict(dict):
+    """An LDAP attribute dictionary"""
+
+    def __init__(self, raw):
+        # Force all keys to lower case
+        super().__init__({k.lower(): v for k, v in raw.items()})
+
+
 class LdapEntry(Entry):
     """An LDAP directory entry"""
 
@@ -294,46 +363,6 @@ class LdapGroup(LdapEntry, Group):
         """Users who are members of this group"""
         return (self.db.User(dn, attrs) for dn, attrs in
                 self.db.search(self.db.User.model.membership(self)))
-
-
-##############################################################################
-#
-# LDAP tracing
-
-
-class LdapTraceEvent(TraceEvent):
-    """LDAP trace event"""
-
-    @staticmethod
-    def control(ctrl):
-        """Stringify LDAP control"""
-        return '%s %s %s' % (
-            ctrl.controlType,
-            'true' if ctrl.criticality else 'false',
-            b64encode(ctrl.encodedControlValue).decode()
-        )
-
-    def log(self, fh):
-        writer = ldif.LDIFWriter(fh)
-        res = self.data
-        fh.write('# result: %d\n' % res.type)
-        fh.writelines(
-            '# control: %s\n' % self.control(ctrl)
-            for ctrl in res.ctrls
-        )
-        fh.write('#\n')
-        for dn, attrs, ctrls in res.data:
-            if res.type == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
-                ctrl = ResponseControl(dn)
-                ctrl.decodeControlValue(attrs)
-                dn = ''
-                record = {'control': [self.control(ctrl).encode()]}
-            else:
-                record = dict(attrs)
-            for ctrl in ctrls:
-                record.setdefault('control', [])
-                record['control'].append(self.control(ctrl).encode())
-            writer.unparse(dn, record)
 
 
 ##############################################################################
@@ -537,7 +566,7 @@ class LdapDatabase(WatchableDatabase):
         """Watch for database changes"""
         for res in self._watch_search(cookie=cookie, persist=persist):
             if trace:
-                yield LdapTraceEvent(res)
+                yield res
             rtype = res.type
             if rtype == ldap.RES_SEARCH_ENTRY:  # pylint: disable=no-member
                 for dn, attrs, ctrls in res.data:

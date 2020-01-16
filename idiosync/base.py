@@ -182,23 +182,44 @@ class State(MutableMapping):
 # Tracing
 
 
-class TraceEvent:
+class TraceEvent(ABC):
     """A database trace event"""
-
-    def __init__(self, data):
-        self.data = data
-
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.data)
 
     def __str__(self):
         with io.StringIO() as buf:
-            self.log(buf)
+            self.write(buf)
             return buf.getvalue()
 
-    def log(self, fh):
-        """Log trace event to file"""
-        fh.write(str(self.data))
+    @abstractmethod
+    def write(self, fh):
+        """Write trace event to output file"""
+
+    @classmethod
+    @abstractmethod
+    def read(cls, fh):
+        """Read trace event from input file"""
+
+    @classmethod
+    @abstractmethod
+    def delimiter(cls, line):
+        """Test for start-of-event delimiter in input file"""
+
+    @classmethod
+    def readall(cls, fh):
+        """Read all trace events from input file"""
+        delimiter = cls.delimiter
+        with io.StringIO() as subfh:
+            while True:
+                line = fh.readline()
+                if delimiter(line) or not line:
+                    if subfh.tell():
+                        subfh.seek(0)
+                        yield cls.read(subfh)
+                    subfh.seek(0)
+                    subfh.truncate()
+                if not line:
+                    break
+                subfh.write(line)
 
 
 ##############################################################################
@@ -311,7 +332,7 @@ class WatchableDatabase(Database):
             cookie = cookiefh.read() or None
         for entry in self.watch(cookie=cookie, trace=True, **kwargs):
             if isinstance(entry, TraceEvent):
-                entry.log(fh)
+                entry.write(fh)
                 fh.flush()
             elif isinstance(entry, SyncCookie) and cookiefh is not None:
                 cookie = str(entry)
