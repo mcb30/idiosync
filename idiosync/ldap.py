@@ -1,9 +1,10 @@
 """LDAP user database"""
 
 from abc import abstractmethod
-from base64 import b64encode
-from collections import namedtuple
+from base64 import b64encode, b64decode
+from collections import defaultdict, namedtuple
 import logging
+import re
 import uuid
 import ldap
 from ldap.controls import ResponseControl
@@ -57,6 +58,71 @@ class LdapSyncIdMismatchError(Exception):
 
     def __str__(self):
         return "SyncId %s mismatch for entry %s (%s)" % self.args
+
+
+class LdapInvalidControlError(ValueError):
+    """Invalid LDAP control value"""
+
+    def __str__(self):
+        return "Invalid LDAP control: %s" % self.args
+
+
+##############################################################################
+#
+# LDAP controls
+
+
+class LdapResponseControl(ldap.controls.ResponseControl):
+    """LDAP response server control mixin
+
+    This mixin class provides the ability to encode an LDAP control to
+    an LDIF representation, and to decode an LDIF representation to an
+    LDAP control.
+    """
+
+    RE = re.compile(
+        r'(?P<control>\S+)\s+(?P<criticality>true|false)\s+(?P<value>\S+)'
+    )
+
+    CRITICALITY = {
+        'true': True,
+        'false': False,
+    }
+
+    def __str__(self):
+        return self.to_ldif()
+
+    def decodeControlValue(self, encodedControlValue):
+        """Decode the encoded control value"""
+        # pylint: disable=attribute-defined-outside-init
+        super().decodeControlValue(encodedControlValue)
+        self.encodedControlValue = encodedControlValue
+
+    def to_ldif(self):
+        """Encode to LDIF attribute value"""
+        return '%s %s %s' % (
+            self.controlType,
+            'true' if self.criticality else 'false',
+            b64encode(self.encodedControlValue).decode()
+        )
+
+    @classmethod
+    def from_ldif(cls, value, knownLDAPControls=None):
+        """Decode from LDIF attribute value"""
+        knownLDAPControls = knownLDAPControls or RESPONSE_CONTROLS
+        m = cls.RE.fullmatch(value)
+        if not m:
+            raise LdapInvalidControlError(value)
+        return ldap.controls.DecodeControlTuples([(
+            m['control'], cls.CRITICALITY[m['criticality']],
+            b64decode(m['value'])
+        )], knownLDAPControls=knownLDAPControls)[0]
+
+
+RESPONSE_CONTROLS = defaultdict(lambda: LdapResponseControl, {
+    k: type(v.__name__, (LdapResponseControl, v), {})
+    for k, v in ldap.controls.KNOWN_RESPONSE_CONTROLS.items()
+})
 
 
 ##############################################################################
@@ -235,22 +301,6 @@ class LdapGroup(LdapEntry, Group):
 # LDAP tracing
 
 
-class LdapResponseControl(ldap.controls.ResponseControl):
-    """LDAP response server control with tracing support"""
-
-    def decodeControlValue(self, encodedControlValue):
-        """Decode the encoded control value"""
-        # pylint: disable=attribute-defined-outside-init
-        super().decodeControlValue(encodedControlValue)
-        self.encodedControlValue = encodedControlValue
-
-
-LdapResponseControls = {
-    k: type(v.__name__, (LdapResponseControl, v), {})
-    for k, v in ldap.controls.KNOWN_RESPONSE_CONTROLS.items()
-}
-
-
 class LdapTraceEvent(TraceEvent):
     """LDAP trace event"""
 
@@ -372,7 +422,7 @@ class LdapDatabase(WatchableDatabase):
         while True:
             yield LdapResult(*self.ldap.result4(
                 msgid, all=0, add_ctrls=1, add_intermediates=1,
-                resp_ctrl_classes=LdapResponseControls,
+                resp_ctrl_classes=RESPONSE_CONTROLS,
             ))
 
     def _watch_res_search_entry(self, dn, attrs, sync):
