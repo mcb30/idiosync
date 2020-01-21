@@ -22,12 +22,16 @@ import weakref
 class Attribute(ABC):
     """A user database entry attribute"""
 
-    def __init__(self, name, multi=False):
+    def __init__(self, name=None, multi=False):
         self.name = name
         self.multi = multi
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.name)
+
+    def __set_name__(self, owner, name):
+        if self.name is None:
+            self.name = name
 
 
 class Entry(ABC):
