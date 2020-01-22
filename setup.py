@@ -27,6 +27,7 @@ setup(
         'alembic',
         'pyasn1',
         'pyyaml',
+        'setuptools',
         'sqlalchemy',
     ] + ([] if os.getenv('READTHEDOCS') else [
         'python-ldap',
@@ -37,4 +38,5 @@ setup(
             'idiotrace=idiosync.cli:TraceCommand.main',
         ],
     },
+    test_suite='test',
 )
