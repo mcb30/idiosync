@@ -4,10 +4,11 @@ set -e
 set -x
 
 cfgfile=$1
+cookie=$(mktemp)
 
 function trace_start {
     tracefile=$1
-    idiotrace ${cfgfile} -c .cookie -o "$@" &
+    idiotrace ${cfgfile} -c ${cookie} -o "$@" &
     tracepid=$!
 }
 
@@ -16,8 +17,6 @@ function trace_stop {
     kill ${tracepid}
     cat ${tracefile}
 }
-
-rm -f .cookie
 
 trace_start create-users.ldif
 ipa user-add alice --first=Alice --last=Archer
