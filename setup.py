@@ -8,16 +8,6 @@ from setuptools import setup, find_packages
 setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Environment :: Console",
-        "Intended Audience :: System Administrators",
-        "License :: OSI Approved :: "
-        "GNU General Public License v2 or later (GPLv2+)",
-        "Programming Language :: Python :: 3",
-        "Topic :: Security",
-        "Topic :: System :: Systems Administration :: Authentication/Directory",
-    ],
     packages=find_packages(exclude=['test']),
     use_scm_version=True,
     setup_requires=[
