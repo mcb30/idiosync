@@ -33,3 +33,13 @@ class SynchronizerTestCase(ReplayTestCase):
             groups={k: self.dst.Group.find_match(v)
                     for k, v in entries.groups.items()},
         )
+
+    def test_empty(self):
+        """Test that initial database state is valid but empty"""
+        self.assertEqual(list(self.dst.users), [])
+        self.assertEqual(list(self.dst.groups), [])
+
+    def test_create_users(self):
+        """Test create-users.ldif"""
+        entries = self.ldap_sync('create-users.ldif')
+        self.assertEqual(len(entries.users), 2)
