@@ -1,12 +1,8 @@
 """Unit test common functionality"""
 
-from contextlib import contextmanager
 from io import TextIOWrapper
 import unittest
-from unittest.mock import patch
 import pkg_resources
-import ldap
-from ..ldap import LdapResult, LdapDatabase
 
 
 class TestCase(unittest.TestCase):
@@ -41,18 +37,3 @@ class TestCase(unittest.TestCase):
     def resource_textio(cls, name):
         """Get package resource content as (text) file-like object"""
         return TextIOWrapper(cls.resource_stream(name))
-
-    @classmethod
-    def readall(cls, ldif):
-        """Read all trace events from LDIF file"""
-        with cls.resource_textio(ldif) as fh:
-            yield from LdapResult.readall(fh)
-
-    @classmethod
-    @contextmanager
-    def patch_ldif(cls, ldif):
-        """Patch LDAP database to return trace events from LDIF file"""
-        with patch.object(ldap, 'initialize', autospec=True):
-            with patch.object(LdapDatabase, '_watch_search', autospec=True,
-                              return_value=cls.readall(ldif)):
-                yield
