@@ -1,6 +1,6 @@
 """Synchronization unit test common functionality"""
 
-from ..base import database
+from ..plugins import plugins
 from ..sync import synchronize
 from .replay import ReplayedEntries, ReplayTestCase
 
@@ -22,7 +22,7 @@ class SynchronizerTestCase(ReplayTestCase):
 
     def plugin_database(self, **kwargs):
         """Construct plugin database"""
-        return database(self.plugin, **kwargs)
+        return plugins[self.plugin](**kwargs)
 
     def ldap_sync(self, ldif):
         """Synchronize database from LDIF file"""

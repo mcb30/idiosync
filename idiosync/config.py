@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 import yaml
-from .base import Database
+from .plugins import plugins
 from .sync import DatabaseSynchronizer
 
 
@@ -36,9 +36,6 @@ class Config(ABC):
 class DatabaseConfig(Config):
     """A database configuration"""
 
-    Database = Database
-    """Base database class"""
-
     def __init__(self, plugin, params):
         self.plugin = plugin
         self.params = params
@@ -59,7 +56,7 @@ class DatabaseConfig(Config):
     @property
     def database(self):
         """Configured database"""
-        return self.Database.plugin(self.plugin)(**self.params)
+        return plugins[self.plugin](**self.params)
 
 
 class SynchronizerConfig(Config):

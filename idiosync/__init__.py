@@ -1,4 +1,4 @@
 """User database synchronization"""
 
-from .base import database
+from .plugins import plugins
 from .sync import synchronize

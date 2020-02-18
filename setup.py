@@ -27,6 +27,13 @@ setup(
             'idiosync=idiosync.cli:SynchronizeCommand.main',
             'idiotrace=idiosync.cli:TraceCommand.main',
         ],
+        'idiosync.plugins': [
+            'ldap=idiosync.ldap:LdapDatabase',
+            'rfc2307=idiosync.rfc2307:Rfc2307Database',
+            'freeipa=idiosync.freeipa:IpaDatabase',
+            'mediawiki=idiosync.mediawiki:MediaWikiDatabase',
+            'requesttracker=idiosync.requesttracker:RequestTrackerDatabase',
+        ],
     },
     test_suite='test',
 )
