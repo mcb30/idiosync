@@ -39,7 +39,7 @@ class OrmUser(Base):
         principal = OrmPrincipal(PrincipalType='User')
         super().__init__(*args, principal=principal, **kwargs)
 
-    id = Column(ForeignKey('Principals.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('Principals.id'), primary_key=True)
     Name = Column(String, nullable=False, unique=True)
     EmailAddress = Column(String)
     RealName = Column(String)
@@ -70,7 +70,7 @@ class OrmGroup(Base):
         principal = OrmPrincipal(PrincipalType='Group')
         super().__init__(*args, principal=principal, **kwargs)
 
-    id = Column(ForeignKey('Principals.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('Principals.id'), primary_key=True)
     Name = Column(String, unique=True)
     Description = Column(String)
 
@@ -95,8 +95,8 @@ class OrmMember(Base):
     __tablename__ = 'GroupMembers'
 
     id = Column(Integer, primary_key=True)
-    GroupId = Column(ForeignKey('Groups.id'), nullable=False)
-    MemberId = Column(ForeignKey('Users.id'), nullable=False)
+    GroupId = Column(Integer, ForeignKey('Groups.id'), nullable=False)
+    MemberId = Column(Integer, ForeignKey('Users.id'), nullable=False)
 
     user = relationship('OrmUser', back_populates='memberships',
                         lazy='joined')
@@ -109,8 +109,8 @@ class OrmIdiosyncUser(Base):
 
     __tablename__ = 'IdiosyncUser'
 
-    id = Column(ForeignKey('Users.id', onupdate='CASCADE', ondelete='CASCADE'),
-                primary_key=True)
+    id = Column(Integer, ForeignKey('Users.id', onupdate='CASCADE',
+                                    ondelete='CASCADE'), primary_key=True)
     IdiosyncId = Column(UuidChar, unique=True)
 
     user = relationship('OrmUser', back_populates='idiosync_user')
@@ -121,9 +121,8 @@ class OrmIdiosyncGroup(Base):
 
     __tablename__ = 'IdiosyncGroup'
 
-    id = Column(ForeignKey('Groups.id', onupdate='CASCADE',
-                           ondelete='CASCADE'),
-                primary_key=True)
+    id = Column(Integer, ForeignKey('Groups.id', onupdate='CASCADE',
+                                    ondelete='CASCADE'), primary_key=True)
     IdiosyncId = Column(UuidChar, unique=True)
 
     group = relationship('OrmGroup', back_populates='idiosync_group')

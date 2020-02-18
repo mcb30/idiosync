@@ -50,7 +50,8 @@ class OrmUserGroup(Base):
 
     __tablename__ = 'user_groups'
 
-    ug_user = Column(ForeignKey('user.user_id'), primary_key=True)
+    ug_user = Column(UnsignedInteger, ForeignKey('user.user_id'),
+                     primary_key=True)
     ug_group = Column(BinaryString, primary_key=True)
 
     user = relationship('OrmUser', back_populates='user_groups')
@@ -63,7 +64,8 @@ class OrmIpBlock(Base):
 
     ipb_id = Column(Integer, primary_key=True)
     ipb_address = Column(BinaryString, nullable=False, default='')
-    ipb_user = Column(ForeignKey('user.user_id'), nullable=False)
+    ipb_user = Column(UnsignedInteger, ForeignKey('user.user_id'),
+                      nullable=False)
     ipb_reason = Column(BinaryString, nullable=False, default='Disabled user')
     ipb_timestamp = Column(BinaryString, nullable=False, default=lambda:
                            datetime.now().strftime('%Y%m%d%H%M%S'))
@@ -79,8 +81,10 @@ class OrmIdiosyncUser(Base):
 
     __tablename__ = 'idiosync_user'
 
-    idu_user = Column(ForeignKey('user.user_id', onupdate='CASCADE',
-                                 ondelete='CASCADE'), primary_key=True)
+    idu_user = Column(UnsignedInteger,
+                      ForeignKey('user.user_id', onupdate='CASCADE',
+                                 ondelete='CASCADE'),
+                      primary_key=True)
     idu_syncid = Column(UuidChar, nullable=False, unique=True)
 
     user = relationship('OrmUser', back_populates='idiosync_user')
