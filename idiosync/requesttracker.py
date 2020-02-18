@@ -5,8 +5,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from .sqlalchemy import (UuidChar, SqlModel, SqlAttribute, SqlEntry, SqlUser,
-                         SqlGroup, SqlStateModel, SqlState, SqlConfig,
-                         SqlDatabase)
+                         SqlGroup, SqlSyncId, SqlStateModel, SqlState,
+                         SqlConfig, SqlDatabase)
 
 ##############################################################################
 #
@@ -55,10 +55,7 @@ class OrmUser(Base):
                                  uselist=False, lazy='joined',
                                  cascade='all, delete-orphan',
                                  passive_deletes=True)
-    IdiosyncId = association_proxy(
-        'idiosync_user', 'IdiosyncId',
-        creator=lambda syncid: OrmIdiosyncUser(IdiosyncId=syncid)
-    )
+    IdiosyncId = association_proxy('idiosync_user', 'IdiosyncId')
 
 
 class OrmGroup(Base):
@@ -83,10 +80,7 @@ class OrmGroup(Base):
                                   uselist=False, lazy='joined',
                                   cascade='all, delete-orphan',
                                   passive_deletes=True)
-    IdiosyncId = association_proxy(
-        'idiosync_group', 'IdiosyncId',
-        creator=lambda syncid: OrmIdiosyncGroup(IdiosyncId=syncid)
-    )
+    IdiosyncId = association_proxy('idiosync_group', 'IdiosyncId')
 
 
 class OrmMember(Base):
@@ -104,10 +98,11 @@ class OrmMember(Base):
                          lazy='joined')
 
 
-class OrmIdiosyncUser(Base):
+class OrmIdiosyncUser(SqlSyncId, Base):
     """An RT user synchronization identifier"""
 
     __tablename__ = 'IdiosyncUser'
+    __syncid__ = 'IdiosyncId'
 
     id = Column(Integer, ForeignKey('Users.id', onupdate='CASCADE',
                                     ondelete='CASCADE'), primary_key=True)
@@ -116,10 +111,11 @@ class OrmIdiosyncUser(Base):
     user = relationship('OrmUser', back_populates='idiosync_user')
 
 
-class OrmIdiosyncGroup(Base):
+class OrmIdiosyncGroup(SqlSyncId, Base):
     """An RT group synchronization identifier"""
 
     __tablename__ = 'IdiosyncGroup'
+    __syncid__ = 'IdiosyncId'
 
     id = Column(Integer, ForeignKey('Groups.id', onupdate='CASCADE',
                                     ondelete='CASCADE'), primary_key=True)

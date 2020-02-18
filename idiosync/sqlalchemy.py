@@ -298,6 +298,23 @@ class SqlGroup(SqlEntry, WritableGroup):
 
 ##############################################################################
 #
+# User database synchronization identifiers
+
+
+class SqlSyncId:
+    """Synchronization identifier mixin"""
+
+    __syncid__ = None
+
+    def __init__(self, syncid=None, **kwargs):
+        """Allow row to be constructed from a synchronization identifier"""
+        if syncid is not None:
+            kwargs[self.__syncid__] = syncid
+        super().__init__(**kwargs)
+
+
+##############################################################################
+#
 # User database synchronization state
 
 

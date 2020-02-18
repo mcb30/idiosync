@@ -6,8 +6,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.associationproxy import association_proxy
 from .sqlalchemy import (BinaryString, UnsignedInteger, UuidChar, SqlModel,
-                         SqlAttribute, SqlUser, SqlStateModel, SqlState,
-                         SqlConfig, SqlDatabase)
+                         SqlAttribute, SqlUser, SqlSyncId, SqlStateModel,
+                         SqlState, SqlConfig, SqlDatabase)
 from .dummy import DummyGroup
 
 ##############################################################################
@@ -39,10 +39,7 @@ class OrmUser(Base):
                                  uselist=False, lazy='joined',
                                  cascade='all, delete-orphan',
                                  passive_deletes=True)
-    user_idiosyncid = association_proxy(
-        'idiosync_user', 'idu_syncid',
-        creator=lambda syncid: OrmIdiosyncUser(idu_syncid=syncid)
-    )
+    user_idiosyncid = association_proxy('idiosync_user', 'idu_syncid')
 
 
 class OrmUserGroup(Base):
@@ -76,10 +73,11 @@ class OrmIpBlock(Base):
     user = relationship('OrmUser', back_populates='ipblocks')
 
 
-class OrmIdiosyncUser(Base):
+class OrmIdiosyncUser(SqlSyncId, Base):
     """A MediaWiki user synchronization identifier"""
 
     __tablename__ = 'idiosync_user'
+    __syncid__ = 'idu_syncid'
 
     idu_user = Column(UnsignedInteger,
                       ForeignKey('user.user_id', onupdate='CASCADE',
