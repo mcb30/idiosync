@@ -14,7 +14,6 @@ class DummyGroup(WritableGroup):
     definitions.  In such databases, a group exists if and only if it
     has members; there is no separate concept of group existence.
     """
-    # pylint: disable=abstract-method
 
     key = None
 

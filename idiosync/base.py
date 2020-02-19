@@ -1,8 +1,6 @@
 """User database"""
 
-# pylint: disable=abstract-method
-
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections import UserString
 from collections.abc import Iterable, MutableMapping
 import io
@@ -18,7 +16,7 @@ import weakref
 # User database entries
 
 
-class Attribute(ABC):
+class Attribute:
     """A user database entry attribute"""
 
     def __init__(self, name=None, multi=False):
@@ -33,7 +31,7 @@ class Attribute(ABC):
             self.name = name
 
 
-class Entry(ABC):
+class Entry:
     """A user database entry"""
 
     def __repr__(self):
@@ -185,7 +183,7 @@ class State(MutableMapping):
 # Tracing
 
 
-class TraceEvent(ABC):
+class TraceEvent:
     """A database trace event"""
 
     def __str__(self):
@@ -230,7 +228,7 @@ class TraceEvent(ABC):
 # User database
 
 
-class Config(ABC):
+class Config:
     """A user database configuration"""
 
     def __init__(self, **kwargs):
@@ -242,7 +240,7 @@ UserType = Type[User]
 GroupType = Type[Group]
 
 
-class Database(ABC):
+class Database:
     """A user database"""
 
     Config: ClassVar[ConfigType]

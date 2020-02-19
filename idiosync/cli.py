@@ -1,6 +1,6 @@
 """Command line interface"""
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import argparse
 from contextlib import nullcontext
 import logging
@@ -8,7 +8,7 @@ from typing import ClassVar, List, Type
 from .config import Config, DatabaseConfig, SynchronizerConfig
 
 
-class Command(ABC):
+class Command:
     """An executable command"""
 
     loglevels: ClassVar[List] = [logging.ERROR, logging.WARNING,
@@ -49,7 +49,6 @@ ConfigType = Type[Config]
 
 class ConfigCommand(Command):
     """An executable command utilising a configuration file"""
-    # pylint: disable=abstract-method
 
     Config: ClassVar[ConfigType]
 
@@ -68,7 +67,6 @@ class ConfigCommand(Command):
 
 class WatchCommand(Command):
     """An executable command for watching a database"""
-    # pylint: disable=abstract-method
 
     @classmethod
     def parser(cls, **kwargs):

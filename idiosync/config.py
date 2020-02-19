@@ -1,6 +1,6 @@
 """Configuration files"""
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import ClassVar, Type
 import yaml
 from .plugins import plugins
@@ -14,7 +14,7 @@ class ConfigError(Exception):
         return "Configuration error: %s" % self.args
 
 
-class Config(ABC):
+class Config:
     """A configuration subtree"""
 
     @classmethod

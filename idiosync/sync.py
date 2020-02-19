@@ -1,6 +1,5 @@
 """User database synchronization"""
 
-from abc import ABC
 import logging
 from typing import ClassVar, List, Type
 from .base import (Entry, User, SyncCookie, SyncId, SyncIds, UnchangedSyncIds,
@@ -55,7 +54,7 @@ class AttributeSynchronizer:
             setattr(dst, self.name, srcval)
 
 
-class EntrySynchronizer(ABC):
+class EntrySynchronizer:
     """A user database entry synchronizer"""
 
     attrs: List[str]

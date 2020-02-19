@@ -1,6 +1,5 @@
 """SQLAlchemy user database"""
 
-from abc import ABCMeta
 import logging
 from typing import ClassVar
 import uuid
@@ -32,7 +31,6 @@ class BinaryString(TypeDecorator):
     use raw binary columns and handle character encoding and decoding
     entirely at the application level.
     """
-    # pylint: disable=abstract-method
 
     impl = VARBINARY
     python_type = str
@@ -52,7 +50,6 @@ class BinaryString(TypeDecorator):
 
 class UnsignedInteger(TypeDecorator):
     """Unsigned integer column"""
-    # pylint: disable=abstract-method
 
     impl = Integer
     python_type = int
@@ -80,7 +77,6 @@ class UuidBinary(TypeDecorator):
     the native backend UUID type is used; for other databases a
     BINARY(16) is used.
     """
-    # pylint: disable=abstract-method
 
     impl = BINARY
     python_type = uuid.UUID
@@ -115,7 +111,6 @@ class UuidChar(TypeDecorator):
     Backends that erroneously choose to return bytes instead of
     strings are handled transparently.
     """
-    # pylint: disable=abstract-method
 
     impl = String
     python_type = uuid.UUID
@@ -170,7 +165,7 @@ class SqlAttribute(Attribute):
         setattr(instance.row, self.name, value)
 
 
-class SqlEntryMeta(ABCMeta):
+class SqlEntryMeta(type):
     """SQL user database entry metaclass"""
 
     def __init__(cls, name, bases, dct):
