@@ -3,11 +3,12 @@
 from abc import abstractmethod
 from collections import UserString
 from collections.abc import Iterable, MutableMapping
+from dataclasses import dataclass
 import io
 import itertools
 import sys
 from typing import ClassVar, Type
-import uuid
+from uuid import UUID
 import weakref
 
 
@@ -16,15 +17,12 @@ import weakref
 # User database entries
 
 
+@dataclass
 class Attribute:
     """A user database entry attribute"""
 
-    def __init__(self, name=None, multi=False):
-        self.name = name
-        self.multi = multi
-
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.name)
+    name: str = None
+    multi: bool = False
 
     def __set_name__(self, owner, name):
         if self.name is None:
@@ -151,17 +149,17 @@ class SyncCookie(UserString):
         return "%s(%r)" % (self.__class__.__name__, self.data)
 
 
+@dataclass  # type: ignore[misc]
 class State(MutableMapping):
     """User database synchronization state"""
+
+    db: 'Database'
 
     KEY_LEN: ClassVar[int] = 128
     """Maximum state key length"""
 
     KEY_COOKIE: ClassVar[str] = 'cookie'
     """Synchronization cookie state key"""
-
-    def __init__(self, db):
-        self.db = db
 
     def prepare(self):
         """Prepare for use as part of an idiosync user database"""
@@ -231,8 +229,9 @@ class TraceEvent:
 class Config:
     """A user database configuration"""
 
-    def __init__(self, **kwargs):
-        self.options = kwargs
+    def __init__(self, **kwargs) -> None:
+        if kwargs:
+            raise ValueError("Unexpected arguments: %s" % ", ".join(kwargs))
 
 
 Config_ = Config
@@ -246,13 +245,16 @@ class Database:
     Config: ClassVar[Type[Config_]]
     """Configuration class for this database"""
 
-    User: ClassVar[Type[User_]]
+    User: Type[User_]
     """User class for this database"""
 
-    Group: ClassVar[Type[Group_]]
+    Group: Type[Group_]
     """Group class for this database"""
 
-    def __init__(self, **kwargs):
+    config: Config_
+    """Configuration for this database"""
+
+    def __init__(self, **kwargs) -> None:
         self.config = self.Config(**kwargs)  # pylint: disable=no-member
         # Construct User and Group classes attached to this database
         db = weakref.proxy(self)
@@ -327,7 +329,10 @@ class WritableDatabase(Database):
     State: ClassVar[Type[State_]]
     """State class for this database"""
 
-    def __init__(self, **kwargs):
+    state: State_
+    """Synchronization state"""
+
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         db = weakref.proxy(self)
         self.state = self.State(db)  # pylint: disable=no-member
@@ -354,7 +359,7 @@ class WritableDatabase(Database):
 # Synchronization identifiers
 
 
-class SyncId(uuid.UUID):
+class SyncId(UUID):
     """A synchronization identifier
 
     A synchronization identifier is a UUID used to permanently
@@ -395,22 +400,19 @@ class SyncId(uuid.UUID):
     synchronization identifiers.
     """
 
-    def __init__(self, *args, uuid=None, **kwargs):
-        # pylint: disable=redefined-outer-name
+    def __init__(self, *args, uuid: UUID = None, **kwargs) -> None:
         if uuid is not None:
-            super().__init__(*args, bytes=uuid.bytes, **kwargs)
+            kwargs['bytes'] = uuid.bytes
+            super().__init__(*args, **kwargs)
         else:
             super().__init__(*args, **kwargs)
 
 
+@dataclass
 class SyncIds(Iterable):
     """A list of synchronization identifiers"""
 
-    def __init__(self, iterable):
-        self.iterable = iterable
-
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.iterable)
+    iterable: Iterable
 
     def __iter__(self):
         return iter(self.iterable)
@@ -424,11 +426,8 @@ class DeletedSyncIds(SyncIds):
     """A list of synchronization identifiers for deleted database entries"""
 
 
+@dataclass
 class RefreshComplete:
     """An indication that the refresh stage of synchronization is complete"""
 
-    def __init__(self, autodelete=False):
-        self.autodelete = autodelete
-
-    def __repr__(self):
-        return "%s(autodelete=%r)" % (self.__class__.__name__, self.autodelete)
+    autodelete: bool = False

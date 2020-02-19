@@ -1,12 +1,14 @@
 """Dummy user database"""
 
 from collections import UserDict
+from dataclasses import dataclass
 import uuid
-from .base import WritableGroup, State
+from .base import Database, WritableGroup, State
 
 NAMESPACE_DUMMY = uuid.UUID('c5dd5cb8-b889-431e-8426-81297a053894')
 
 
+@dataclass  # type: ignore[misc]
 class DummyGroup(WritableGroup):
     """A dummy group
 
@@ -15,10 +17,7 @@ class DummyGroup(WritableGroup):
     has members; there is no separate concept of group existence.
     """
 
-    key = None
-
-    def __init__(self, key):
-        self.key = key
+    key: str = None
 
     @property
     def uuid(self):
@@ -67,6 +66,6 @@ class DummyGroup(WritableGroup):
 class DummyState(State, UserDict):
     """Dummy synchronization state"""
 
-    def __init__(self, db):
+    def __init__(self, db: Database) -> None:
         super().__init__(db)
         self.data = {}

@@ -2,7 +2,7 @@
 
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Mapping
 from unittest.mock import patch
 import ldap
 from ..base import User, Group
@@ -15,8 +15,8 @@ from .common import TestCase
 class ReplayedEntries:
     """Summary of replayed database entries"""
 
-    users: Dict[str, User] = field(default_factory=dict)
-    groups: Dict[str, Group] = field(default_factory=dict)
+    users: Mapping[str, User] = field(default_factory=dict)
+    groups: Mapping[str, Group] = field(default_factory=dict)
 
     def record(self, entry):
         """Record database entry"""

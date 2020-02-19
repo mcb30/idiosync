@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 import logging
 import re
-from typing import ClassVar, Dict, List, Tuple
+from typing import Any, Callable, ClassVar, Mapping, List, Tuple
 import uuid
 import ldap
 from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
@@ -70,7 +70,7 @@ class LdapResponseControl(ldap.controls.ResponseControl):
         r'(?P<control>\S+)\s+(?P<criticality>true|false)\s+(?P<value>\S+)'
     )
 
-    CRITICALITY: ClassVar[Dict[str, bool]] = {
+    CRITICALITY: ClassVar[Mapping[str, bool]] = {
         'true': True,
         'false': False,
     }
@@ -116,7 +116,9 @@ RESPONSE_CONTROLS = defaultdict(lambda: LdapResponseControl, {
 # LDAP search results
 
 
-LdapDataTuple = Tuple[str, Dict[str, List[bytes]], List[LdapResponseControl]]
+LdapDataTuple = Tuple[
+    str, Mapping[str, List[bytes]], List[LdapResponseControl]
+]
 
 
 @dataclass
@@ -261,13 +263,13 @@ class LdapEntryUuidAttribute(LdapUuidAttribute):
 # LDAP entries
 
 
+@dataclass
 class LdapModel:
     """An LDAP model"""
 
-    def __init__(self, objectClass, key, member):
-        self.objectClass = objectClass
-        self.key = key
-        self.member = member
+    objectClass: str
+    key: str
+    member: Callable[[Any], str]
 
     @property
     def all(self):
@@ -286,11 +288,12 @@ class LdapModel:
 class LdapAttributeDict(dict):
     """An LDAP attribute dictionary"""
 
-    def __init__(self, raw):
+    def __init__(self, raw: Mapping[str, List[bytes]]) -> None:
         # Force all keys to lower case
         super().__init__({k.lower(): v for k, v in raw.items()})
 
 
+@dataclass
 class LdapEntry(Entry):
     """An LDAP directory entry"""
 
@@ -298,14 +301,18 @@ class LdapEntry(Entry):
     memberOf = LdapStringAttribute('memberOf', multi=True)
     uuid = LdapEntryUuidAttribute('entryUUID')
 
+    dn: str
+    """Distinguished name"""
+
+    attrs: Mapping[str, List[bytes]]
+    """Attributes"""
+
     model: ClassVar[LdapModel] = None
     """LDAP model"""
 
-    def __init__(self, dn, attrs):
-        super().__init__()
-        self.dn = dn
-        self.attrs = (attrs if isinstance(attrs, LdapAttributeDict)
-                      else LdapAttributeDict(attrs))
+    def __post_init__(self) -> None:
+        if not isinstance(self.attrs, LdapAttributeDict):
+            self.attrs = LdapAttributeDict(self.attrs)
 
     @property
     def key(self):
@@ -370,20 +377,21 @@ class LdapGroup(LdapEntry, Group):
 # LDAP database
 
 
+@dataclass
 class LdapConfig(Config):
     """LDAP user database configuration"""
 
-    def __init__(self, uri=None, domain='', base=None, sasl_mech='GSSAPI',
-                 username=None, password=None, **kwargs):
-        # pylint: disable=too-many-arguments
-        super().__init__(**kwargs)
-        self.uri = uri
-        self.domain = domain
-        self.base = (base if base is not None else
-                     ','.join('dc=%s' % x for x in self.domain.split('.')))
-        self.sasl_mech = sasl_mech
-        self.username = username
-        self.password = password
+    uri: str = None
+    domain: str = ''
+    base: str = None
+    sasl_mech: str = 'GSSAPI'
+    username: str = None
+    password: str = None
+    options: Mapping = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.base is None:
+            self.base = ','.join('dc=%s' % x for x in self.domain.split('.'))
 
 
 class LdapDatabase(WatchableDatabase):
@@ -393,7 +401,9 @@ class LdapDatabase(WatchableDatabase):
     User = LdapUser
     Group = LdapGroup
 
-    def __init__(self, **kwargs):
+    config: LdapConfig
+
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.ldap = ldap.initialize(self.config.uri, **self.config.options)
         self.bind()

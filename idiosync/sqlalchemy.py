@@ -1,8 +1,10 @@
 """SQLAlchemy user database"""
 
+from dataclasses import dataclass, field
 import logging
-from typing import ClassVar
+from typing import Any, ClassVar, Mapping, Optional, Type
 import uuid
+import sqlalchemy
 from sqlalchemy import create_engine, inspect, and_
 from sqlalchemy.orm import sessionmaker, contains_eager
 from sqlalchemy.types import TypeDecorator, BINARY, VARBINARY, Integer, String
@@ -16,6 +18,8 @@ from .base import (Attribute, WritableEntry, WritableUser, WritableGroup,
 NAMESPACE_SQL = uuid.UUID('b3c23456-05d8-4be5-b173-b57aeb30b4f4')
 
 logger = logging.getLogger(__name__)
+
+SqlOrm = Any
 
 
 ##############################################################################
@@ -141,14 +145,14 @@ class UuidChar(TypeDecorator):
 # User database entries
 
 
+@dataclass
 class SqlModel:
     """A SQLAlchemy model"""
 
-    def __init__(self, orm, key, syncid=None, member=None):
-        self.orm = orm
-        self.key = key
-        self.syncid = syncid
-        self.member = member
+    orm: Type[SqlOrm]
+    key: str
+    syncid: Optional[str] = None
+    member: Optional[str] = None
 
 
 class SqlAttribute(Attribute):
@@ -176,18 +180,17 @@ class SqlEntryMeta(type):
             cls.uuid_ns = uuid.uuid5(NAMESPACE_SQL, table.name)
 
 
+@dataclass
 class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
     """A SQL user database entry"""
+
+    row: SqlOrm
 
     model: ClassVar[SqlModel] = None
     """SQLAlchemy model for this table"""
 
     uuid_ns: ClassVar[uuid.UUID] = None
     """UUID namespace for entries within this table"""
-
-    def __init__(self, row):
-        super().__init__()
-        self.row = row
 
     @property
     def key(self):
@@ -302,11 +305,11 @@ class SqlSyncId:
 
     __syncid__: ClassVar[str] = None
 
-    def __init__(self, syncid=None, **kwargs):
+    def __init__(self, syncid: uuid.UUID = None, **kwargs) -> None:
         """Allow row to be constructed from a synchronization identifier"""
         if syncid is not None:
             kwargs[self.__syncid__] = syncid
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)  # type: ignore[call-arg]
 
 
 ##############################################################################
@@ -314,24 +317,23 @@ class SqlSyncId:
 # User database synchronization state
 
 
+@dataclass
 class SqlStateModel:
     """A SQLAlchemy synchronization state model"""
 
-    def __init__(self, orm, key, value):
-        self.orm = orm
-        self.key = key
-        self.value = value
+    orm: Type[SqlOrm]
+    key: str
+    value: str
 
 
+@dataclass
 class SqlState(State):
     """SQL user database synchronization state"""
 
+    rows: Mapping[str, SqlOrm] = field(init=False, default_factory=dict)
+
     model: ClassVar[SqlStateModel] = None
     """SQLAlchemy synchronization state model"""
-
-    def __init__(self, db):
-        super().__init__(db)
-        self.rows = {}
 
     def query(self, key):
         """Query database for synchronization state"""
@@ -383,12 +385,12 @@ class SqlState(State):
 # User database
 
 
+@dataclass
 class SqlConfig(Config):
     """SQL user database configuration"""
 
-    def __init__(self, uri, **kwargs):
-        super().__init__(**kwargs)
-        self.uri = uri
+    uri: str
+    options: Mapping = field(default_factory=dict)
 
 
 class SqlDatabase(WritableDatabase):
@@ -399,13 +401,18 @@ class SqlDatabase(WritableDatabase):
     Group = SqlGroup
     State = SqlState
 
-    def __init__(self, **kwargs):
+    config: SqlConfig
+    engine: sqlalchemy.engine.Engine
+    session: sqlalchemy.orm.Session
+    _alembic: Optional[alembic.operations.Operations]
+
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         echo = (logger.getEffectiveLevel() < logging.DEBUG)
         self.engine = create_engine(self.config.uri, echo=echo,
                                     **self.config.options)
-        self.Session = sessionmaker(bind=self.engine)
-        self.session = self.Session()
+        Session = sessionmaker(bind=self.engine)
+        self.session = Session()
         self._alembic = None
 
     def __repr__(self):

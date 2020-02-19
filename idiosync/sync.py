@@ -1,29 +1,43 @@
 """User database synchronization"""
 
+from dataclasses import dataclass, field
 import logging
-from typing import ClassVar, List, Type
-from .base import (Entry, User, SyncCookie, SyncId, SyncIds, UnchangedSyncIds,
-                   DeletedSyncIds, RefreshComplete)
+from typing import Callable, ClassVar, List, Type
+from .base import (Attribute, Entry, User, Database, SyncCookie, SyncId,
+                   SyncIds, UnchangedSyncIds, DeletedSyncIds, RefreshComplete)
 
 logger = logging.getLogger(__name__)
 
 
+CachedAttributeSynchronizer = Callable[
+    ['AttributeSynchronizer', Attribute, Attribute],
+    None
+]
+
+
+@dataclass
 class AttributeSynchronizer:
     """A user database entry attribute synchronizer"""
 
-    def __init__(self, name, Src, Dst):
-        self.name = name
-        self.Src = Src
-        self.Dst = Dst
-        self.sync = (
+    name: str
+    """Attribute name"""
+
+    Src: Type[Attribute]
+    """Source attribute type"""
+
+    Dst: Type[Attribute]
+    """Destination attribute type"""
+
+    sync: CachedAttributeSynchronizer = field(init=False, repr=False)
+    """Attribute value synchronization function"""
+
+    def __post_init__(self) -> None:
+        self.sync = (  # type: ignore[assignment]
             self.sync_multi_to_multi if self.Src.multi and self.Dst.multi else
             self.sync_multi_to_single if self.Src.multi else
             self.sync_single_to_multi if self.Dst.multi else
             self.sync_single_to_single
         )
-
-    def __repr__(self):
-        return "%s(%r,%r)" % (self.__class__.__name__, self.Src, self.Dst)
 
     def sync_multi_to_multi(self, src, dst):
         """Synchronize multi-valued attribute to multi-valued attribute"""
@@ -54,18 +68,20 @@ class AttributeSynchronizer:
             setattr(dst, self.name, srcval)
 
 
+@dataclass
 class EntrySynchronizer:
     """A user database entry synchronizer"""
 
-    attrs: List[str]
-    """Attribute list"""
+    Src: Type[Entry]
+    """Source entry type"""
 
-    def __init__(self, Src, Dst):
+    Dst: Type[Entry]
+    """Destination entry type"""
 
-        # Record source and destination classes
-        self.Src = Src
-        self.Dst = Dst
+    attrs: List[str] = field(init=False, repr=False)
+    """Shared attribute list"""
 
+    def __post_init__(self) -> None:
         # Filter attribute list and construct attribute synchronizers
         self.attrs = [x for x in self.attrs
                       if hasattr(self.Src, x) and hasattr(self.Dst, x)]
@@ -73,10 +89,6 @@ class EntrySynchronizer:
             attrsync = AttributeSynchronizer(attr, getattr(self.Src, attr),
                                              getattr(self.Dst, attr))
             setattr(self, attr, attrsync)
-
-    def __repr__(self):
-        return "%s(%s,%s)" % (self.__class__.__name__, self.Src.__name__,
-                              self.Dst.__name__)
 
     def sync(self, src, dst):
         """Synchronize entries"""
@@ -113,20 +125,28 @@ UserSynchronizer_ = UserSynchronizer
 GroupSynchronizer_ = GroupSynchronizer
 
 
+@dataclass
 class Synchronizer:
     """A user database synchronizer"""
+
+    src: Database
+    """Source database"""
+
+    dst: Database
+    """Destination database"""
+
+    user: UserSynchronizer_ = field(init=False, repr=False)
+    """User synchronizer"""
+
+    group: GroupSynchronizer_ = field(init=False, repr=False)
+    """Group synchronizer"""
 
     UserSynchronizer: ClassVar[Type[UserSynchronizer_]] = UserSynchronizer
     GroupSynchronizer: ClassVar[Type[GroupSynchronizer_]] = GroupSynchronizer
 
-    def __init__(self, src, dst):
-        self.src = src
-        self.dst = dst
-        self.user = self.UserSynchronizer(src.User, dst.User)
-        self.group = self.GroupSynchronizer(src.Group, dst.Group)
-
-    def __repr__(self):
-        return "%s(%r,%r)" % (self.__class__.__name__, self.src, self.dst)
+    def __post_init__(self) -> None:
+        self.user = self.UserSynchronizer(self.src.User, self.dst.User)
+        self.group = self.GroupSynchronizer(self.src.Group, self.dst.Group)
 
     def entry(self, src, syncids=None, strict=False):
         """Synchronize a single database entry"""

@@ -1,5 +1,6 @@
 """MediaWiki user database"""
 
+from dataclasses import dataclass
 from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
@@ -171,6 +172,7 @@ class MediaWikiUser(SqlUser):
         return (self.db.Group(x.ug_group) for x in self.row.user_groups)
 
 
+@dataclass
 class MediaWikiGroup(DummyGroup, SqlGroup):
     """A MediaWiki group
 
@@ -194,12 +196,11 @@ class MediaWikiState(SqlState):
     model = SqlStateModel(OrmIdiosyncState, 'ids_key', 'ids_value')
 
 
+@dataclass
 class MediaWikiConfig(SqlConfig):
     """MediaWiki user database configuration"""
 
-    def __init__(self, uri, title_case=True, **kwargs):
-        super().__init__(uri, **kwargs)
-        self.title_case = title_case
+    title_case: bool = True
 
 
 class MediaWikiDatabase(SqlDatabase):

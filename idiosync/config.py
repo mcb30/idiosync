@@ -1,7 +1,8 @@
 """Configuration files"""
 
 from abc import abstractmethod
-from typing import ClassVar, Type
+from dataclasses import dataclass
+from typing import ClassVar, Mapping, Type
 import yaml
 from .plugins import plugins
 from .sync import Synchronizer
@@ -34,16 +35,12 @@ class Config:
                                                         *e.args)) from e
 
 
+@dataclass
 class DatabaseConfig(Config):
     """A database configuration"""
 
-    def __init__(self, plugin, params):
-        self.plugin = plugin
-        self.params = params
-
-    def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.plugin,
-                               self.params)
+    plugin: str
+    params: Mapping
 
     @classmethod
     def parse(cls, config):
@@ -64,18 +61,15 @@ DatabaseConfig_ = DatabaseConfig
 Synchronizer_ = Synchronizer
 
 
+@dataclass
 class SynchronizerConfig(Config):
     """A database synchronizer configuration"""
 
+    src: DatabaseConfig_
+    dst: DatabaseConfig_
+
     DatabaseConfig: ClassVar[Type[DatabaseConfig_]] = DatabaseConfig
     Synchronizer: ClassVar[Type[Synchronizer_]] = Synchronizer
-
-    def __init__(self, src, dst):
-        self.src = src
-        self.dst = dst
-
-    def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.src, self.dst)
 
     @classmethod
     def parse(cls, config):

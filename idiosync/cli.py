@@ -11,13 +11,19 @@ from .config import Config, DatabaseConfig, SynchronizerConfig
 class Command:
     """An executable command"""
 
+    args: argparse.Namespace
+    """Parsed arguments"""
+
     loglevels: ClassVar[List] = [logging.ERROR, logging.WARNING,
                                  logging.INFO, logging.DEBUG]
+    """Log levels"""
 
-    def __init__(self, argv=None):
+    verbosity: int = loglevels.index(logging.INFO)
+    """Verbosity level"""
+
+    def __init__(self, argv: List[str] = None) -> None:
         self.args = self.parser().parse_args(argv)
-        self.verbosity = (self.loglevels.index(logging.INFO) +
-                          self.args.verbose - self.args.quiet)
+        self.verbosity += (self.args.verbose - self.args.quiet)
         logging.basicConfig(level=self.loglevel)
 
     @classmethod
@@ -52,7 +58,10 @@ class ConfigCommand(Command):
 
     Config: ClassVar[Type[Config_]]
 
-    def __init__(self, argv=None):
+    config: Config_
+    """Loaded configuration"""
+
+    def __init__(self, argv: List[str] = None) -> None:
         super().__init__(argv)
         filename = self.args.config
         self.config = self.Config.load(filename)  # pylint: disable=no-member
