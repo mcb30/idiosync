@@ -5,11 +5,14 @@ python:
 install:
   - pip install -e .
   - pip install coverage
+  - pip install coveralls
   - pip install mypy
   - pip install sqlalchemy-stubs
   - pip install pycodestyle
   - pip install pylint
 script: ./test.sh
+after_success:
+  - coveralls
 deploy:
   provider: pypi
   distributions: "sdist bdist_wheel"
