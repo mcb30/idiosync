@@ -1,9 +1,10 @@
 """Configuration files"""
 
 from abc import ABC, abstractmethod
+from typing import ClassVar, Type
 import yaml
 from .plugins import plugins
-from .sync import DatabaseSynchronizer
+from .sync import Synchronizer
 
 
 class ConfigError(Exception):
@@ -59,11 +60,15 @@ class DatabaseConfig(Config):
         return plugins[self.plugin](**self.params)
 
 
+DatabaseConfigType = Type[DatabaseConfig]
+SynchronizerType = Type[Synchronizer]
+
+
 class SynchronizerConfig(Config):
     """A database synchronizer configuration"""
 
-    DatabaseConfig = DatabaseConfig
-    DatabaseSynchronizer = DatabaseSynchronizer
+    DatabaseConfig: ClassVar[DatabaseConfigType] = DatabaseConfig
+    Synchronizer: ClassVar[SynchronizerType] = Synchronizer
 
     def __init__(self, src, dst):
         self.src = src
@@ -88,4 +93,4 @@ class SynchronizerConfig(Config):
     @property
     def synchronizer(self):
         """Configured synchronizer"""
-        return self.DatabaseSynchronizer(self.src.database, self.dst.database)
+        return self.Synchronizer(self.src.database, self.dst.database)

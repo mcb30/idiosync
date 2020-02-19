@@ -66,11 +66,11 @@ class LdapResponseControl(ldap.controls.ResponseControl):
     LDAP control.
     """
 
-    RE = re.compile(
+    RE: ClassVar[re.Pattern] = re.compile(
         r'(?P<control>\S+)\s+(?P<criticality>true|false)\s+(?P<value>\S+)'
     )
 
-    CRITICALITY = {
+    CRITICALITY: ClassVar[Dict[str, bool]] = {
         'true': True,
         'false': False,
     }
@@ -130,7 +130,7 @@ class LdapResult(TraceEvent):
     name: str = None
     value: bytes = None
 
-    RE: ClassVar = re.compile(
+    RE: ClassVar[re.Pattern] = re.compile(
         r'#\s+((result:\s+(?P<result>\d+))|(control:\s+(?P<control>.*)))'
     )
 
@@ -298,7 +298,7 @@ class LdapEntry(Entry):
     memberOf = LdapStringAttribute('memberOf', multi=True)
     uuid = LdapEntryUuidAttribute('entryUUID')
 
-    model = None
+    model: ClassVar[LdapModel] = None
     """LDAP model"""
 
     def __init__(self, dn, attrs):

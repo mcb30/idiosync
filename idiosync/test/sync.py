@@ -9,7 +9,7 @@ class SynchronizerTestCase(ReplayTestCase):
     """Synchronization test case base class"""
     # pylint: disable=too-many-public-methods
 
-    plugin = None
+    plugin: str = None
 
     def setUp(self):
         super().setUp()

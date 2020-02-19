@@ -1,7 +1,8 @@
 """User database synchronization"""
 
-from abc import ABC, abstractmethod
+from abc import ABC
 import logging
+from typing import ClassVar, List, Type
 from .base import (Entry, User, SyncCookie, SyncId, SyncIds, UnchangedSyncIds,
                    DeletedSyncIds, RefreshComplete)
 
@@ -57,6 +58,9 @@ class AttributeSynchronizer:
 class EntrySynchronizer(ABC):
     """A user database entry synchronizer"""
 
+    attrs: List[str]
+    """Attribute list"""
+
     def __init__(self, Src, Dst):
 
         # Record source and destination classes
@@ -74,11 +78,6 @@ class EntrySynchronizer(ABC):
     def __repr__(self):
         return "%s(%s,%s)" % (self.__class__.__name__, self.Src.__name__,
                               self.Dst.__name__)
-
-    @property
-    @abstractmethod
-    def attrs(self):
-        """Attribute list"""
 
     def sync(self, src, dst):
         """Synchronize entries"""
@@ -111,11 +110,15 @@ class GroupSynchronizer(EntrySynchronizer):
     attrs = ['commonName', 'description']
 
 
-class DatabaseSynchronizer:
+UserSynchronizerType = Type[UserSynchronizer]
+GroupSynchronizerType = Type[GroupSynchronizer]
+
+
+class Synchronizer:
     """A user database synchronizer"""
 
-    UserSynchronizer = UserSynchronizer
-    GroupSynchronizer = GroupSynchronizer
+    UserSynchronizer: ClassVar[UserSynchronizerType] = UserSynchronizer
+    GroupSynchronizer: ClassVar[GroupSynchronizerType] = GroupSynchronizer
 
     def __init__(self, src, dst):
         self.src = src
@@ -225,6 +228,9 @@ class DatabaseSynchronizer:
                 raise TypeError(src)
 
 
+SynchronizerType = Type[Synchronizer]
+
+
 def synchronize(src, dst, **kwargs):
     """Synchronize source database to destination database"""
-    DatabaseSynchronizer(src, dst).sync(**kwargs)
+    Synchronizer(src, dst).sync(**kwargs)

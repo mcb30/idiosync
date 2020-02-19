@@ -6,8 +6,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.associationproxy import association_proxy
 from .sqlalchemy import (BinaryString, UnsignedInteger, UuidChar, SqlModel,
-                         SqlAttribute, SqlUser, SqlSyncId, SqlStateModel,
-                         SqlState, SqlConfig, SqlDatabase)
+                         SqlAttribute, SqlUser, SqlGroup, SqlSyncId,
+                         SqlStateModel, SqlState, SqlConfig, SqlDatabase)
 from .dummy import DummyGroup
 
 ##############################################################################
@@ -171,7 +171,7 @@ class MediaWikiUser(SqlUser):
         return (self.db.Group(x.ug_group) for x in self.row.user_groups)
 
 
-class MediaWikiGroup(DummyGroup):
+class MediaWikiGroup(DummyGroup, SqlGroup):
     """A MediaWiki group
 
     The MediaWiki database has no table for group definitions: groups
@@ -197,8 +197,8 @@ class MediaWikiState(SqlState):
 class MediaWikiConfig(SqlConfig):
     """MediaWiki user database configuration"""
 
-    def __init__(self, title_case=True, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, uri, title_case=True, **kwargs):
+        super().__init__(uri, **kwargs)
         self.title_case = title_case
 
 

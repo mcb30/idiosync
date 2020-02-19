@@ -8,6 +8,7 @@ from collections.abc import Iterable, MutableMapping
 import io
 import itertools
 import sys
+from typing import ClassVar, Type
 import uuid
 import weakref
 
@@ -41,7 +42,7 @@ class Entry(ABC):
     def __str__(self):
         return str(self.key)
 
-    db = None
+    db: ClassVar['Database'] = None
     """Containing user database
 
     This is populated as a class attribute when the containing
@@ -155,10 +156,10 @@ class SyncCookie(UserString):
 class State(MutableMapping):
     """User database synchronization state"""
 
-    KEY_LEN = 128
+    KEY_LEN: ClassVar[int] = 128
     """Maximum state key length"""
 
-    KEY_COOKIE = 'cookie'
+    KEY_COOKIE: ClassVar[str] = 'cookie'
     """Synchronization cookie state key"""
 
     def __init__(self, db):
@@ -236,30 +237,29 @@ class Config(ABC):
         self.options = kwargs
 
 
+ConfigType = Type[Config]
+UserType = Type[User]
+GroupType = Type[Group]
+
+
 class Database(ABC):
     """A user database"""
 
+    Config: ClassVar[ConfigType]
+    """Configuration class for this database"""
+
+    User: ClassVar[UserType]
+    """User class for this database"""
+
+    Group: ClassVar[GroupType]
+    """Group class for this database"""
+
     def __init__(self, **kwargs):
-        self.config = self.Config(**kwargs)
+        self.config = self.Config(**kwargs)  # pylint: disable=no-member
         # Construct User and Group classes attached to this database
         db = weakref.proxy(self)
         self.User = type(self.User.__name__, (self.User,), {'db': db})
         self.Group = type(self.Group.__name__, (self.Group,), {'db': db})
-
-    @property
-    @abstractmethod
-    def Config(self):
-        """Configuration class for this database"""
-
-    @property
-    @abstractmethod
-    def User(self):
-        """User class for this database"""
-
-    @property
-    @abstractmethod
-    def Group(self):
-        """Group class for this database"""
 
     def user(self, key):
         """Look up user"""
@@ -320,17 +320,19 @@ class WatchableDatabase(Database):
                 cookiefh.flush()
 
 
+StateType = Type[State]
+
+
 class WritableDatabase(Database):
     """A writable user database"""
 
+    State: ClassVar[StateType]
+    """State class for this database"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.state = self.State(weakref.proxy(self))
-
-    @property
-    @abstractmethod
-    def State(self):
-        """State class for this database"""
+        db = weakref.proxy(self)
+        self.state = self.State(db)  # pylint: disable=no-member
 
     def find_syncids(self, syncids, invert=False):
         """Look up user database entries by synchronization identifier"""

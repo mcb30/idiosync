@@ -2,6 +2,7 @@
 
 from abc import ABCMeta
 import logging
+from typing import ClassVar
 import uuid
 from sqlalchemy import create_engine, inspect, and_
 from sqlalchemy.orm import sessionmaker, contains_eager
@@ -183,10 +184,10 @@ class SqlEntryMeta(ABCMeta):
 class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
     """A SQL user database entry"""
 
-    model = None
+    model: ClassVar[SqlModel] = None
     """SQLAlchemy model for this table"""
 
-    uuid_ns = None
+    uuid_ns: ClassVar[uuid.UUID] = None
     """UUID namespace for entries within this table"""
 
     def __init__(self, row):
@@ -267,7 +268,7 @@ class SqlEntry(WritableEntry, metaclass=SqlEntryMeta):
     def prepare(cls):
         """Prepare for use as part of an idiosync user database"""
         # Create SyncId column if needed
-        if cls.model.syncid is not None:
+        if cls.model is not None and cls.model.syncid is not None:
             attr = getattr(cls.model.orm, cls.model.syncid)
             desc = inspect(cls.model.orm).all_orm_descriptors[cls.model.syncid]
             if desc.extension_type is ASSOCIATION_PROXY:
@@ -304,7 +305,7 @@ class SqlGroup(SqlEntry, WritableGroup):
 class SqlSyncId:
     """Synchronization identifier mixin"""
 
-    __syncid__ = None
+    __syncid__: ClassVar[str] = None
 
     def __init__(self, syncid=None, **kwargs):
         """Allow row to be constructed from a synchronization identifier"""
@@ -330,7 +331,7 @@ class SqlStateModel:
 class SqlState(State):
     """SQL user database synchronization state"""
 
-    model = None
+    model: ClassVar[SqlStateModel] = None
     """SQLAlchemy synchronization state model"""
 
     def __init__(self, db):

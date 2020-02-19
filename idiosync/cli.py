@@ -4,13 +4,15 @@ from abc import ABC, abstractmethod
 import argparse
 from contextlib import nullcontext
 import logging
+from typing import ClassVar, List, Type
 from .config import Config, DatabaseConfig, SynchronizerConfig
 
 
 class Command(ABC):
     """An executable command"""
 
-    loglevels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
+    loglevels: ClassVar[List] = [logging.ERROR, logging.WARNING,
+                                 logging.INFO, logging.DEBUG]
 
     def __init__(self, argv=None):
         self.args = self.parser().parse_args(argv)
@@ -42,15 +44,19 @@ class Command(ABC):
         cls().execute()
 
 
+ConfigType = Type[Config]
+
+
 class ConfigCommand(Command):
     """An executable command utilising a configuration file"""
     # pylint: disable=abstract-method
 
-    Config = Config
+    Config: ClassVar[ConfigType]
 
     def __init__(self, argv=None):
         super().__init__(argv)
-        self.config = self.Config.load(self.args.config)
+        filename = self.args.config
+        self.config = self.Config.load(filename)  # pylint: disable=no-member
 
     @classmethod
     def parser(cls, **kwargs):
