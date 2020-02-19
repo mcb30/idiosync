@@ -172,7 +172,7 @@ class SqlEntryMeta(type):
         super().__init__(name, bases, dct)
         # Construct a namespace based on the table name if applicable
         if cls.model is not None:
-            table = inspect(cls.model.orm).mapped_table
+            table = inspect(cls.model.orm).persist_selectable
             cls.uuid_ns = uuid.uuid5(NAMESPACE_SQL, table.name)
 
 
@@ -440,7 +440,7 @@ class SqlDatabase(WritableDatabase):
 
     def prepare_table(self, orm):
         """Prepare table for use as part of an idiosync user database"""
-        table = inspect(orm).mapped_table
+        table = inspect(orm).persist_selectable
         if table.name not in inspect(self.engine).get_table_names():
             op = alembic.operations.ops.CreateTableOp.from_table(table)
             self.alembic.invoke(op)
@@ -451,7 +451,7 @@ class SqlDatabase(WritableDatabase):
         # disassociated from the table, to work around an apparent bug
         # in alembic (or sqlalchemy) that would otherwise result in an
         # error "Column object 'c' already assigned to Table 't'".
-        table = column.parent.mapped_table.tometadata(MetaData())
+        table = column.parent.persist_selectable.tometadata(MetaData())
         column = table.columns[column.name]
         columns = inspect(self.engine).get_columns(table.name)
         if not any(x['name'] == column.name for x in columns):
