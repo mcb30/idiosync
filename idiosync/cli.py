@@ -44,13 +44,13 @@ class Command:
         cls().execute()
 
 
-ConfigType = Type[Config]
+Config_ = Config
 
 
 class ConfigCommand(Command):
     """An executable command utilising a configuration file"""
 
-    Config: ClassVar[ConfigType]
+    Config: ClassVar[Type[Config_]]
 
     def __init__(self, argv=None):
         super().__init__(argv)

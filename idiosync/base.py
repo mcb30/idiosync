@@ -235,21 +235,21 @@ class Config:
         self.options = kwargs
 
 
-ConfigType = Type[Config]
-UserType = Type[User]
-GroupType = Type[Group]
+Config_ = Config
+User_ = User
+Group_ = Group
 
 
 class Database:
     """A user database"""
 
-    Config: ClassVar[ConfigType]
+    Config: ClassVar[Type[Config_]]
     """Configuration class for this database"""
 
-    User: ClassVar[UserType]
+    User: ClassVar[Type[User_]]
     """User class for this database"""
 
-    Group: ClassVar[GroupType]
+    Group: ClassVar[Type[Group_]]
     """Group class for this database"""
 
     def __init__(self, **kwargs):
@@ -318,13 +318,13 @@ class WatchableDatabase(Database):
                 cookiefh.flush()
 
 
-StateType = Type[State]
+State_ = State
 
 
 class WritableDatabase(Database):
     """A writable user database"""
 
-    State: ClassVar[StateType]
+    State: ClassVar[Type[State_]]
     """State class for this database"""
 
     def __init__(self, **kwargs):

@@ -60,15 +60,15 @@ class DatabaseConfig(Config):
         return plugins[self.plugin](**self.params)
 
 
-DatabaseConfigType = Type[DatabaseConfig]
-SynchronizerType = Type[Synchronizer]
+DatabaseConfig_ = DatabaseConfig
+Synchronizer_ = Synchronizer
 
 
 class SynchronizerConfig(Config):
     """A database synchronizer configuration"""
 
-    DatabaseConfig: ClassVar[DatabaseConfigType] = DatabaseConfig
-    Synchronizer: ClassVar[SynchronizerType] = Synchronizer
+    DatabaseConfig: ClassVar[Type[DatabaseConfig_]] = DatabaseConfig
+    Synchronizer: ClassVar[Type[Synchronizer_]] = Synchronizer
 
     def __init__(self, src, dst):
         self.src = src

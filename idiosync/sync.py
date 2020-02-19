@@ -109,15 +109,15 @@ class GroupSynchronizer(EntrySynchronizer):
     attrs = ['commonName', 'description']
 
 
-UserSynchronizerType = Type[UserSynchronizer]
-GroupSynchronizerType = Type[GroupSynchronizer]
+UserSynchronizer_ = UserSynchronizer
+GroupSynchronizer_ = GroupSynchronizer
 
 
 class Synchronizer:
     """A user database synchronizer"""
 
-    UserSynchronizer: ClassVar[UserSynchronizerType] = UserSynchronizer
-    GroupSynchronizer: ClassVar[GroupSynchronizerType] = GroupSynchronizer
+    UserSynchronizer: ClassVar[Type[UserSynchronizer_]] = UserSynchronizer
+    GroupSynchronizer: ClassVar[Type[GroupSynchronizer_]] = GroupSynchronizer
 
     def __init__(self, src, dst):
         self.src = src
@@ -225,9 +225,6 @@ class Synchronizer:
             else:
 
                 raise TypeError(src)
-
-
-SynchronizerType = Type[Synchronizer]
 
 
 def synchronize(src, dst, **kwargs):
