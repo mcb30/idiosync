@@ -5,16 +5,13 @@ import ldap.syncrepl
 from pyasn1.codec.ber import decoder
 
 try:
-    # pylint: disable=no-member
     SyncInfoValue = ldap.syncrepl.SyncInfoValue
 except AttributeError:
-    # pylint: disable=no-member
     SyncInfoValue = ldap.syncrepl.syncInfoValue
 
 
 class SyncInfoMessage:
     """A syncInfoMessage intermediate message"""
-    # pylint: disable=no-member
 
     responseName = ldap.syncrepl.SyncInfoMessage.responseName
 

@@ -144,7 +144,7 @@ class LdapResult(TraceEvent):
         # Write LDIF data
         writer = ldif.LDIFWriter(fh)
         for dn, attrs, ctrls in self.data:
-            if self.type == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
+            if self.type == ldap.RES_INTERMEDIATE:
                 ctrl = LdapResponseControl(dn)
                 ctrl.decodeControlValue(attrs)
                 dn = ''
@@ -176,7 +176,7 @@ class LdapResult(TraceEvent):
         for dn, entry in parser.all_records:
             ctrls = [LdapResponseControl.from_ldif(x.decode())
                      for x in entry.pop('control', [])]
-            if self.type == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
+            if self.type == ldap.RES_INTERMEDIATE:
                 ctrl = ctrls.pop(0)
                 dn = ctrl.controlType
                 entry = ctrl.encodedControlValue
@@ -429,11 +429,9 @@ class LdapDatabase(WatchableDatabase):
 
     def search(self, search):
         """Search LDAP database"""
-        # pylint: disable=no-member
         logger.debug("Searching for %s", search)
-        return self.ldap.search_s(self.config.base,
-                                  # pylint: disable=no-member
-                                  ldap.SCOPE_SUBTREE, search, ['*', '+'])
+        return self.ldap.search_s(self.config.base, ldap.SCOPE_SUBTREE,
+                                  search, ['*', '+'])
 
     @property
     def users(self):
@@ -454,10 +452,8 @@ class LdapDatabase(WatchableDatabase):
         syncreq = SyncRequestControl(cookie=cookie, mode=mode)
         search = '(|%s%s)' % (self.User.model.all, self.Group.model.all)
         logger.debug("Searching in %s mode for %s", mode, search)
-        msgid = self.ldap.search_ext(self.config.base,
-                                     # pylint: disable=no-member
-                                     ldap.SCOPE_SUBTREE, search, ['*', '+'],
-                                     serverctrls=[syncreq])
+        msgid = self.ldap.search_ext(self.config.base, ldap.SCOPE_SUBTREE,
+                                     search, ['*', '+'], serverctrls=[syncreq])
         while True:
             yield LdapResult(*self.ldap.result4(
                 msgid, all=0, add_ctrls=1, add_intermediates=1,
@@ -578,21 +574,21 @@ class LdapDatabase(WatchableDatabase):
             if trace:
                 yield res
             rtype = res.type
-            if rtype == ldap.RES_SEARCH_ENTRY:  # pylint: disable=no-member
+            if rtype == ldap.RES_SEARCH_ENTRY:
                 for dn, attrs, ctrls in res.data:
                     sync = next((ctrl for ctrl in ctrls if
                                  isinstance(ctrl, SyncStateControl)), None)
                     if sync is None:
                         raise LdapProtocolError("Missing syncStateControl")
                     yield from self._watch_res_search_entry(dn, attrs, sync)
-            elif rtype == ldap.RES_INTERMEDIATE:  # pylint: disable=no-member
+            elif rtype == ldap.RES_INTERMEDIATE:
                 sync = next((SyncInfoMessage(msg)
                              for rname, msg, ctrls in res.data
                              if rname == SyncInfoMessage.responseName), None)
                 if sync is None:
                     raise LdapProtocolError("Missing syncInfoMessage")
                 yield from self._watch_res_intermediate(sync)
-            elif rtype == ldap.RES_SEARCH_RESULT:  # pylint: disable=no-member
+            elif rtype == ldap.RES_SEARCH_RESULT:
                 sync = next((ctrl for ctrl in res.ctrls if
                              isinstance(ctrl, SyncDoneControl)), None)
                 if sync is None:

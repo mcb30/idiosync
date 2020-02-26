@@ -1,3 +1,2 @@
 [MESSAGES CONTROL]
-disable=abstract-method,invalid-name,too-few-public-methods,too-many-ancestors
-
+disable=abstract-method,invalid-name,no-member,too-few-public-methods,too-many-ancestors

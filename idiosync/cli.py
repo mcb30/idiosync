@@ -64,7 +64,7 @@ class ConfigCommand(Command):
     def __init__(self, argv: List[str] = None) -> None:
         super().__init__(argv)
         filename = self.args.config
-        self.config = self.Config.load(filename)  # pylint: disable=no-member
+        self.config = self.Config.load(filename)
 
     @classmethod
     def parser(cls, **kwargs):

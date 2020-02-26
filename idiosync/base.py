@@ -255,7 +255,7 @@ class Database:
     """Configuration for this database"""
 
     def __init__(self, **kwargs) -> None:
-        self.config = self.Config(**kwargs)  # pylint: disable=no-member
+        self.config = self.Config(**kwargs)
         # Construct User and Group classes attached to this database
         db = weakref.proxy(self)
         self.User = type(self.User.__name__, (self.User,), {'db': db})
@@ -335,7 +335,7 @@ class WritableDatabase(Database):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         db = weakref.proxy(self)
-        self.state = self.State(db)  # pylint: disable=no-member
+        self.state = self.State(db)
 
     def find_syncids(self, syncids, invert=False):
         """Look up user database entries by synchronization identifier"""
