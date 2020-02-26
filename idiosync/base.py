@@ -16,12 +16,9 @@ import weakref
 
 T_Config = TypeVar('T_Config', bound='Config')
 T_Database = TypeVar('T_Database', bound='Database')
-T_Entry = TypeVar('T_Entry', bound='Entry')
 T_Group = TypeVar('T_Group', bound='Group')
 T_State = TypeVar('T_State', bound='State')
-T_TraceEvent = TypeVar('T_TraceEvent', bound='TraceEvent')
 T_User = TypeVar('T_User', bound='User')
-T_WritableEntry = TypeVar('T_WritableEntry', bound='WritableEntry')
 T_WritableGroup = TypeVar('T_WritableGroup', bound='WritableGroup')
 T_WritableUser = TypeVar('T_WritableUser', bound='WritableUser')
 
@@ -45,6 +42,8 @@ class Attribute:
 
 class Entry(Generic[T_Database]):
     """A user database entry"""
+
+    Self = TypeVar('Self', bound='Entry')
 
     def __repr__(self) -> str:
         return "%s(%r)" % (self.__class__.__name__, self.key)
@@ -76,7 +75,7 @@ class Entry(Generic[T_Database]):
 
     @classmethod
     @abstractmethod
-    def find(cls: Type[T_Entry], key: str) -> Optional[T_Entry]:
+    def find(cls: Type[Self], key: str) -> Optional[Self]:
         """Look up user database entry"""
 
     @classmethod
@@ -113,32 +112,32 @@ class Group(Entry[T_Database], Generic[T_Database, T_User]):
 class WritableEntry(Entry[T_Database], Generic[T_Database]):
     """A writable user database entry"""
 
+    Self = TypeVar('Self', bound='WritableEntry')
+
     @property
     @abstractmethod
     def syncid(self) -> UUID:
         """Synchronization identifier"""
 
     @classmethod
-    def find_syncid(cls: Type[T_WritableEntry],
-                    syncid: UUID) -> Optional[T_WritableEntry]:
+    def find_syncid(cls: Type[Self], syncid: UUID) -> Optional[Self]:
         """Look up user database entry by synchronization identifier"""
         return next(cls.find_syncids({syncid}), None)
 
     @classmethod
     @abstractmethod
-    def find_syncids(cls: Type[T_WritableEntry], syncids: Iterable[UUID],
-                     invert: bool = False) -> Iterator[T_WritableEntry]:
+    def find_syncids(cls: Type[Self], syncids: Iterable[UUID],
+                     invert: bool = False) -> Iterator[Self]:
         """Look up user database entries by synchronization identifier"""
 
     @classmethod
-    def find_match(cls: Type[T_WritableEntry],
-                   entry: Entry) -> Optional[T_WritableEntry]:
+    def find_match(cls: Type[Self], entry: Entry) -> Optional[Self]:
         """Look up closest matching user database entry"""
         return cls.find(entry.key)
 
     @classmethod
     @abstractmethod
-    def create(cls: Type[T_WritableEntry]) -> T_WritableEntry:
+    def create(cls: Type[Self]) -> Self:
         """Create new user database entry"""
 
     @abstractmethod
@@ -203,6 +202,8 @@ class State(abc.MutableMapping):
 class TraceEvent:
     """A database trace event"""
 
+    Self = TypeVar('Self', bound='TraceEvent')
+
     def __str__(self) -> str:
         with io.StringIO() as buf:
             self.write(buf)
@@ -214,7 +215,7 @@ class TraceEvent:
 
     @classmethod
     @abstractmethod
-    def read(cls: Type[T_TraceEvent], fh: TextIO) -> T_TraceEvent:
+    def read(cls: Type[Self], fh: TextIO) -> Self:
         """Read trace event from input file"""
 
     @classmethod
@@ -223,8 +224,7 @@ class TraceEvent:
         """Test for start-of-event delimiter in input file"""
 
     @classmethod
-    def readall(cls: Type[T_TraceEvent],
-                fh: TextIO) -> Iterator[T_TraceEvent]:
+    def readall(cls: Type[Self], fh: TextIO) -> Iterator[Self]:
         """Read all trace events from input file"""
         delimiter = cls.delimiter
         with io.StringIO() as subfh:

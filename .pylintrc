@@ -1,2 +1,5 @@
 [MESSAGES CONTROL]
 disable=abstract-method,invalid-name,no-member,too-few-public-methods,too-many-ancestors
+
+[VARIABLES]
+additional-builtins=Self
