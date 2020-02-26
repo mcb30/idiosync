@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 import logging
 import re
-from typing import Any, Callable, ClassVar, Mapping, List, Tuple
+from typing import Any, Callable, ClassVar, List, Mapping, Pattern, Tuple
 import uuid
 import ldap
 from ldap.syncrepl import (SyncRequestControl, SyncStateControl,
@@ -66,7 +66,7 @@ class LdapResponseControl(ldap.controls.ResponseControl):
     LDAP control.
     """
 
-    RE: ClassVar[re.Pattern] = re.compile(
+    RE: ClassVar[Pattern] = re.compile(
         r'(?P<control>\S+)\s+(?P<criticality>true|false)\s+(?P<value>\S+)'
     )
 
@@ -132,7 +132,7 @@ class LdapResult(TraceEvent):
     name: str = None
     value: bytes = None
 
-    RE: ClassVar[re.Pattern] = re.compile(
+    RE: ClassVar[Pattern] = re.compile(
         r'#\s+((result:\s+(?P<result>\d+))|(control:\s+(?P<control>.*)))'
     )
 
