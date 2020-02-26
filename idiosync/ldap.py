@@ -299,7 +299,7 @@ class LdapEntry(Entry):
 
     member = LdapStringAttribute('member', multi=True)
     memberOf = LdapStringAttribute('memberOf', multi=True)
-    uuid = LdapEntryUuidAttribute('entryUUID')
+    uuid = LdapEntryUuidAttribute('entryUUID')  # type: ignore[assignment]
 
     dn: str
     """Distinguished name"""

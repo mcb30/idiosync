@@ -7,8 +7,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.associationproxy import association_proxy
 from .sqlalchemy import (BinaryString, UnsignedInteger, UuidChar, SqlModel,
-                         SqlAttribute, SqlUser, SqlGroup, SqlSyncId,
-                         SqlStateModel, SqlState, SqlConfig, SqlDatabase)
+                         SqlAttribute, SqlUser, SqlSyncId, SqlStateModel,
+                         SqlState, SqlConfig, SqlDatabase)
 from .dummy import DummyGroup
 
 ##############################################################################
@@ -173,7 +173,7 @@ class MediaWikiUser(SqlUser):
 
 
 @dataclass
-class MediaWikiGroup(DummyGroup, SqlGroup):
+class MediaWikiGroup(DummyGroup):
     """A MediaWiki group
 
     The MediaWiki database has no table for group definitions: groups
@@ -208,7 +208,7 @@ class MediaWikiDatabase(SqlDatabase):
 
     Config = MediaWikiConfig
     User = MediaWikiUser
-    Group = MediaWikiGroup
+    Group = MediaWikiGroup  # type: ignore
     State = MediaWikiState
 
     @property

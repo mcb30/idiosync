@@ -15,7 +15,7 @@ class IpaUser(Rfc2307User):
                       lambda x: '(memberOf=%s)' % x.dn)
 
     disabled = LdapBooleanAttribute('nsAccountLock')
-    uuid = LdapEntryUuidAttribute('nsUniqueId')
+    uuid = LdapEntryUuidAttribute('nsUniqueId')  # type: ignore[assignment]
 
     @property
     def enabled(self):
@@ -28,7 +28,7 @@ class IpaGroup(Rfc2307Group):
 
     model = LdapModel('ipaUserGroup', 'cn', lambda x: '(member=%s)' % x.dn)
 
-    uuid = LdapEntryUuidAttribute('nsUniqueId')
+    uuid = LdapEntryUuidAttribute('nsUniqueId')  # type: ignore[assignment]
 
 
 class IpaConfig(Rfc2307Config):
